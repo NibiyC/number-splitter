@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>号码切割工具</title>
+<script src="https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+
+  body {
+    background: #f5f5f7;
+    padding: 60px 20px;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .lang-switch {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 90px;
+    height: 36px;
+    border-radius: 18px;
+    background: #007aff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lang-switch:hover {
+    background: #0062cc;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,122,255,0.25);
+  }
+  .page-title {
+    padding: 20px 0;
+    margin: 0 0 28px 0;
+    font-size: 34px;
+    font-weight: 700;
+    color: #1d1d1f;
+    text-align: center;
+    letter-spacing: -0.5px;
+  }
+  .top-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: stretch;
+  }
+  .col-input { width: 30%; }
+  .col-middle { width: 30%; display: flex; flex-direction: column; gap: 24px; }
+  .col-right { width: 40%; display: flex; flex-direction: column; gap: 20px; }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    padding: 32px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: 0.28s;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  }
+  .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 24px;
+    letter-spacing: -0.3px;
+  }
+  #numberInput {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #f9f9fb;
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 15px;
+    resize: none;
+    color: #1d1d1f;
+    transition: 0.25s;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  #numberInput:focus {
+    outline: none;
+   标注: #fff;
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+  }
+  #numberInput::placeholder { color: #86868b; }
+  .import-card { height: 280px; }
+  .drop-area {
+    flex: 1;
+    border: 2px dashed #d2d2d7;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #86868b;
+    cursor: pointer;
+    transition: 0.28s;
+    background: #fafafa;
+  }
+  .drop-area.dragover {
+    border-color: #007aff;
+    color: #007aff;
+    background: rgba(0,122,255,0.06);
+  }
+  .drop-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+  .drop-desc { font-size: 13px; text-align: center; line-height: 1.4; }
+
+  .config-card { height: auto; min-height: 380px; }
+  .config-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .config-item {
+    display: flex;
+    align-items: center;
+    padding: 18px 20px;
+    background: #f9f9fb;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: 100%;
+    min-height: 64px;
+    height: 64px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  .config-item.active {
+    background: #e4f3ff;
+    border-color: #007aff;
+  }
+  .config-item:hover {
+    border-color: #007aff;
+  }
+  .config-text {
+    flex: 1;
+    font-size: 16px;
+    color: #1d1d1f;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+  }
+  .config-input {
+    width: 120px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: center;
+    transition: 0.2s;
+    color: #1d1d1f;
+  }
+  .config-input:focus {
+    outline: none;
+    border-color: #007aff;
+  }
+  .seg-status {
+    position: absolute;
+    right: 16px;
+    bottom: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .seg-status.unadded {
+    color: #ff9500;
+  }
+  .seg-status.added {
+    color: #34c759;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-split {
+    width: 900px;
+    max-width: 95vw;
+    display: flex;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  }
+  .modal-left {
+    width: 50%;
+    padding: 24px;
+    border-right: 1px solid #e5e5ea;
+  }
+  .modal-right {
+    width: 50%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    margin-bottom: 20px;
+  }
+  .modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d1d1f;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #86868b;
+    cursor: pointer;
+  }
+  .modal-form-item {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .modal-form-item label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+  }
+  .modal-form-item input,
+  .modal-form-item select {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #e5e5ea;
+    font-size: 15px;
+    background: #f9f9fb;
+    transition: 0.2s;
+  }
+  .modal-form-item input:focus,
+  .modal-form-item select:focus {
+    outline: none;
+    border-color: #007aff;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+  }
+  .btn {
+    height: 44px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.25s;
+    padding: 0 20px;
+  }
+  .btn-primary {
+    background: #007aff;
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: #0062cc;
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-sm {
+    height: 36px;
+    font-size: 13px;
+    padding: 0 12px;
+    margin-left: 6px;
+  }
+  .btn-edit {
+    background: #007aff;
+    color: #fff;
+  }
+  .btn-del {
+    background: #ff3b30;
+    color: #fff;
+  }
+  .segment-item {
+    padding: 12px 14px;
+    background: #f9f9fb;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .segment-text {
+    font-size: 14px;
+    color: #1d1d1f;
+  }
+  .added-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 400px;
+  }
+  .modal-footer {
+    margin-top: 20px;
+    text-align: right;
+  }
+  .stat-card {
+    flex: 1;
+    min-height: 160px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px 20px;
+  }
+  .stat-num {
+    font-size: 52px;
+    font-weight: 700;
+    color: #007aff;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .stat-label {
+    font-size: 15px;
+    color: #86868b;
+  }
+  .btn-block {
+    height: 56px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .btn-main {
+    background: #007aff;
+    color: #fff;
+  }
+  .btn-second {
+    background: #f2f2f7;
+    color: #1d1d1f;
+  }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .loading-mask {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    color: #007aff;
+  }
+  .loading-mask.show { display: flex; }
+
+  .preview-wrapper {
+    margin-top: 12px;
+    display: none;
+  }
+  .preview-card {
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    padding: 28px;
+    max-height: 600px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .preview-header {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .preview-header .btn {
+    flex: 1;
+    min-width: 160px;
+  }
+  .preview-table-container {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 450px;
+    border-radius: 12px;
+    border: 1px solid #f0f0f5;
+  }
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 800px;
+  }
+  .preview-table th {
+    background: #f9f9fb;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: center;
+    border-bottom: 1px solid #e5e5ea;
+    cursor: pointer;
+    transition: 0.2s;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    min-width: 180px;
+  }
+  .preview-table th.active {
+    background: #d1e7ff;
+    color: #007aff;
+  }
+  .preview-table td {
+    padding: 10px 16px;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f5;
+    min-width: 180px;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preview-table tr:nth-child(even) {
+    background: #f9f9fb;
+  }
+  input[type="file"] { display: none; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* 移动端适配（仅在手机生效，电脑完全不变） */
+  @media (max-width: 768px) {
+    body {
+      padding: 60px 12px 20px;
+    }
+    .page-title {
+      font-size: 24px;
+      padding: 10px 0;
+    }
+    .top-row {
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .col-input, .col-middle, .col-right {
+      width: 100%;
+    }
+    .card {
+      padding: 20px 16px;
+      border-radius: 16px;
+    }
+    .card-title {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    #numberInput {
+      min-height: 180px;
+      font-size: 16px;
+    }
+    .import-card {
+      min-height: 160px;
+    }
+    .config-item {
+      padding: 14px 16px;
+      height: auto;
+      min-height: 56px;
+    }
+    .config-input {
+      width: 100px;
+      font-size: 15px;
+    }
+    .stat-num {
+      font-size: 36px;
+    }
+    .btn-block {
+      height: 50px;
+      font-size: 16px;
+    }
+    .lang-switch {
+      top: 12px;
+      right: 12px;
+      width: 80px;
+      height: 32px;
+      font-size: 13px;
+    }
+    .modal-split {
+      flex-direction: column;
+      width: 96vw;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-left, .modal-right {
+      width: 100%;
+      padding: 16px;
+      border-right: none;
+      border-bottom: 1px solid #e5e5ea;
+    }
+    .modal-form-item input,
+    .modal-form-item select {
+      padding: 14px;
+      font-size: 16px;
+    }
+    .btn {
+      height: 48px;
+      font-size: 16px;
+    }
+    .btn-sm {
+      height: 40px;
+      font-size: 14px;
+    }
+    .preview-table th,
+    .preview-table td {
+      min-width: 140px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-mask" id="loading">处理中...</div>
+<button class="lang-switch" id="langSwitch">English</button>
+
+<div class="container">
+  <h1 class="page-title" data-i18n="page_title">号码切割工具</h1>
+  <div class="top-row">
+    <div class="col-input">
+      <div class="card">
+        <h2 class="card-title" data-i18n="input_title">号码输入</h2>
+        <textarea id="numberInput" placeholder="示例：15000000000" data-i18n-placeholder="input_placeholder"></textarea>
+      </div>
+    </div>
+
+    <div class="col-middle">
+      <div class="card import-card">
+        <h2 class="card-title" data-i18n="import_title">文件导入</h2>
+        <div class="drop-area" id="dropArea">
+          <div class="drop-title" data-i18n="drop_title">点击或拖入文件</div>
+          <div class="drop-desc" data-i18n="drop_desc">支持 TXT</div>
+        </div>
+        <input type="file" id="fileInput" accept=".txt">
+      </div>
+
+      <div class="card config-card">
+        <h2 class="card-title" data-i18n="config_title">切割配置</h2>
+        <div class="config-group">
+          <div class="config-item active" data-mode="size">
+            <div class="config-text" data-i18n="size_text">按每份数量切割</div>
+            <input type="number" class="config-input" min="1" value="2000">
+          </div>
+          <div class="config-item" data-mode="count">
+            <div class="config-text" data-i18n="count_text">按总份数平均</div>
+            <input type="number" class="config-input" min="1" value="5">
+          </div>
+          <div class="config-item" data-mode="advanced">
+            <div class="config-text" data-i18n="advanced_text">自定义分段切割</div>
+            <div class="seg-status unadded" data-i18n="unadded">⚠️ 未添加分段配置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="card stat-card">
+        <div class="stat-num" id="validNum">0</div>
+        <div class="stat-label" data-i18n="valid_label">有效号码数量</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-num" id="dupNum">0</div>
+        <div class="stat-label" data-i18n="dup_label">重复号码数量</div>
+      </div>
+      <button class="btn btn-block btn-main" id="processBtn" disabled data-i18n="process_btn">开始处理</button>
+      <button class="btn btn-block btn-second" id="clearBtn" data-i18n="clear_btn">清空重置</button>
+    </div>
+  </div>
+
+  <div class="preview-wrapper" id="resultWrapper">
+    <div class="preview-card">
+      <div class="preview-header">
+        <button class="btn" id="exportSelectedTxt" data-i18n="export_selected_txt">导出选中TXT</button>
+        <button class="btn" id="shareSelectedTxt" data-i18n="share_selected_txt">分享选中TXT</button>
+        <button class="btn" id="exportAllTxt" data-i18n="export_all_txt">导出全部TXT</button>
+        <button class="btn" id="shareAllTxt" data-i18n="share_all_txt">分享全部TXT</button>
+      </div>
+      <div class="preview-table-container">
+        <table class="preview-table" id="previewTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="segModal">
+  <div class="modal-split">
+    <div class="modal-left">
+      <div class="modal-header">
+        <h3 id="formTitle" data-i18n="add_segment">添加分段</h3>
+      </div>
+      <div class="modal-form-item">
+        <label data-i18n="start_line">起始行</label>
+        <input type="number" id="segStart" value="1">
+      </div>
+      <div class="modal-form-item">
+        <label data-i18n="end_line">结束行</label>
+        <input type="number" id="segEnd" placeholder="">
+      </div>
+      <div class="modal-form-item">
+        <label data-i18n="split_type">切割方式</label>
+        <select id="segType">
+          <option value="split" data-i18n="split_by_size">按数量切</option>
+          <option value="count" data-i18n="split_by_count">按份数平均切</option>
+        </select>
+      </div>
+      <div class="modal-form-item" id="argWrap">
+        <label id="argLabel" data-i18n="per_count">每组数量</label>
+        <input type="number" id="segArg" value="2000">
+      </div>
+      <button class="btn btn-primary" id="saveSegBtn" data-i18n="add_btn">添加</button>
+    </div>
+
+    <div class="modal-right">
+      <div class="modal-header">
+        <h3 data-i18n="added_segments">已添加分段</h3>
+      </div>
+      <div class="added-list" id="addedList"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="finishSegBtn" data-i18n="finish_btn">完成</button>
+      </div>
+    </div>
+  </div>
+  <button class="modal-close" id="closeSegModal">×</button>
+</div>
+
+<script>
+  const i18n = {
+    zh: {
+      page_title: "号码切割工具",
+      input_title: "号码输入",
+      input_placeholder: "示例：15000000000",
+      import_title: "文件导入",
+      drop_title: "点击或拖入文件",
+      drop_desc: "支持 TXT",
+      config_title: "切割配置",
+      size_text: "按每份数量切割",
+      count_text: "按总份数平均",
+      advanced_text: "自定义分段切割",
+      unadded: "⚠️ 未添加分段配置",
+      added: "✅ 已添加分段配置",
+      valid_label: "有效号码数量",
+      dup_label: "重复号码数量",
+      process_btn: "开始处理",
+      clear_btn: "清空重置",
+      export_selected_txt: "导出选中TXT",
+      share_selected_txt: "分享选中TXT",
+      export_all_txt: "导出全部TXT",
+      share_all_txt: "分享全部TXT",
+      add_segment: "添加分段",
+      start_line: "起始行",
+      end_line: "结束行",
+      split_type: "切割方式",
+      split_by_size: "按数量切",
+      split_by_count: "按份数平均切",
+      per_count: "每组数量",
+      per_count_count: "分成几份",
+      add_btn: "添加",
+      edit_btn: "修改",
+      del_btn: "删除",
+      added_segments: "已添加分段",
+      finish_btn: "完成",
+      group: "第{{index}}组({{count}}个)",
+      overlap_error: "❌ 该区间与已添加分段重叠，禁止添加！",
+      s_gt_e_error: "❌ 起始行不能大于结束行！",
+      gt0_error: "❌ 行号必须大于0！",
+      invalid_size_error: "❌ 每组数量必须大于0且不大于分段长度！",
+      invalid_count_error: "❌ 份数必须大于0且不大于分段长度！",
+      select_tip: "请先选中分组"
+    },
+    en: {
+      page_title: "Number Splitter Tool",
+      input_title: "Number Input",
+      input_placeholder: "Example: 15000000000",
+      import_title: "File Import",
+      drop_title: "Click or Drag File",
+      drop_desc: "Support TXT",
+      config_title: "Split Config",
+      size_text: "Split by Size",
+      count_text: "Split by Count",
+      advanced_text: "Custom Split",
+      unadded: "⚠️ No Segments Added",
+      added: "✅ Segments Added",
+      valid_label: "Valid Numbers",
+      dup_label: "Duplicate Numbers",
+      process_btn: "Start Process",
+      clear_btn: "Reset",
+      export_selected_txt: "Export Selected TXT",
+      share_selected_txt: "Share Selected TXT",
+      export_all_txt: "Export All TXT",
+      share_all_txt: "Share All TXT",
+      add_segment: "Add Segment",
+      start_line: "Start Line",
+      end_line: "End Line",
+      split_type: "Split Type",
+      split_by_size: "Split by Size",
+      split_by_count: "Split by Count",
+      per_count: "Per Count",
+      per_count_count: "Split Count",
+      add_btn: "Add",
+      edit_btn: "Edit",
+      del_btn: "Delete",
+      added_segments: "Added Segments",
+      finish_btn: "Finish",
+      group: "Group {{index}}({{count}})",
+      overlap_error: "❌ This range overlaps with existing segments, cannot add!",
+      s_gt_e_error: "❌ Start line cannot be greater than end line!",
+      gt0_error: "❌ Line number must be greater than 0!",
+      invalid_size_error: "❌ Size must be >0 and <= segment length!",
+      invalid_count_error: "❌ Count must be >0 and <= segment length!",
+      select_tip: "Please select groups first"
+    }
+  };
+
+  let currentLang = "zh";
+  let selectedGroups = new Set();
+  const PHONE_REGEX = /^\d{11}$/;
+  let validNumbers = [];
+  let chunks = [];
+  let currentMode = "size";
+  let segmentList = [];
+  let editIndex = -1;
+
+  const el = {
+    numberInput: document.getElementById('numberInput'),
+    dropArea: document.getElementById('dropArea'),
+    fileInput: document.getElementById('fileInput'),
+    processBtn: document.getElementById('processBtn'),
+    clearBtn: document.getElementById('clearBtn'),
+    validNum: document.getElementById('validNum'),
+    dupNum: document.getElementById('dupNum'),
+    resultWrapper: document.getElementById('resultWrapper'),
+    previewTable: document.getElementById('previewTable'),
+    langSwitch: document.getElementById('langSwitch'),
+    exportSelectedTxt: document.getElementById('exportSelectedTxt'),
+    shareSelectedTxt: document.getElementById('shareSelectedTxt'),
+    exportAllTxt: document.getElementById('exportAllTxt'),
+    shareAllTxt: document.getElementById('shareAllTxt'),
+    loading: document.getElementById('loading'),
+    advancedItem: document.querySelector('.config-item[data-mode="advanced"]'),
+    segStatus: document.querySelector('.seg-status')
+  };
+
+  const segEl = {
+    modal: document.getElementById('segModal'),
+    closeX: document.getElementById('closeSegModal'),
+    formTitle: document.getElementById('formTitle'),
+    start: document.getElementById('segStart'),
+    end: document.getElementById('segEnd'),
+    type: document.getElementById('segType'),
+    argWrap: document.getElementById('argWrap'),
+    argLabel: document.getElementById('argLabel'),
+    arg: document.getElementById('segArg'),
+    saveBtn: document.getElementById('saveSegBtn'),
+    addedList: document.getElementById('addedList'),
+    finishBtn: document.getElementById('finishSegBtn')
+  };
+
+  // 语言切换
+  el.langSwitch.addEventListener('click', () => {
+    currentLang = currentLang === "zh" ? "en" : "zh";
+    el.langSwitch.textContent = currentLang === "zh" ? "English" : "中文";
+    updateI18n();
+    updateSegStatus();
+    renderTable();
+  });
+
+  function updateI18n() {
+    const lang = i18n[currentLang];
+    document.querySelectorAll('[data-i18n]').forEach(e => {
+      e.textContent = lang[e.dataset.i18n];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(e => {
+      e.placeholder = lang[e.dataset.i18nPlaceholder];
+    });
+    const opts = segEl.type.options;
+    opts[0].textContent = lang.split_by_size;
+    opts[1].textContent = lang.split_by_count;
+    segEl.argLabel.textContent = segEl.type.value === "split" ? lang.per_count : lang.per_count_count;
+  }
+
+  // 文件导入
+  function initFileDrop() {
+    el.dropArea.onclick = () => el.fileInput.click();
+    el.fileInput.onchange = () => {
+      const f = el.fileInput.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = e => { el.numberInput.value = e.target.result; updateStats(); };
+      r.readAsText(f);
+    };
+    el.dropArea.addEventListener('dragover', (e) => { e.preventDefault(); el.dropArea.classList.add('dragover'); });
+    el.dropArea.addEventListener('dragenter', (e) => { e.preventDefault(); el.dropArea.classList.add('dragover'); });
+    el.dropArea.addEventListener('dragleave', () => { el.dropArea.classList.remove('dragover'); });
+    el.dropArea.addEventListener('drop', (e) => {
+      e.preventDefault(); el.dropArea.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = e => { el.numberInput.value = e.target.result; updateStats(); };
+      r.readAsText(f);
+    });
+  }
+
+  // 切割模式切换
+  document.querySelectorAll('.config-item').forEach(item => {
+    item.onclick = () => {
+      document.querySelectorAll('.config-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      currentMode = item.dataset.mode;
+      if (currentMode === 'advanced') openSegModal();
+    };
+  });
+
+  function updateSegStatus() {
+    const lang = i18n[currentLang];
+    if (segmentList.length > 0) {
+      el.segStatus.textContent = lang.added;
+      el.segStatus.className = "seg-status added";
+    } else {
+      el.segStatus.textContent = lang.unadded;
+      el.segStatus.className = "seg-status unadded";
+    }
+  }
+
+  function isFullyCovered() {
+    const total = validNumbers.length;
+    if (total === 0) return false;
+    const used = new Set();
+    segmentList.forEach(s => { for (let i = s.start; i <= s.end; i++) used.add(i); });
+    for (let i = 1; i <= total; i++) if (!used.has(i)) return false;
+    return true;
+  }
+
+  function isOverlap(newStart, newEnd) {
+    for (let i = 0; i < segmentList.length; i++) {
+      if (i === editIndex) continue;
+      const seg = segmentList[i];
+      if (!(newEnd < seg.start || newStart > seg.end)) return true;
+    }
+    return false;
+  }
+
+  // 分段弹窗
+  function openSegModal() {
+    editIndex = -1;
+    const lang = i18n[currentLang];
+    segEl.formTitle.textContent = lang.add_segment;
+    segEl.saveBtn.textContent = lang.add_btn;
+
+    let nextStart = 1;
+    if (segmentList.length > 0) {
+      const last = segmentList[segmentList.length - 1];
+      nextStart = last.end + 1;
+    }
+    const maxEnd = validNumbers.length || 0;
+    if (nextStart > maxEnd) nextStart = "";
+
+    segEl.start.value = nextStart || "";
+    segEl.end.placeholder = maxEnd > 0 ? `最大值：${maxEnd}` : "";
+    segEl.end.value = "";
+    segEl.type.value = "split";
+    segEl.arg.value = 2000;
+    segEl.argWrap.style.display = "block";
+    segEl.modal.classList.add("show");
+    renderAddedList();
+
+    const full = isFullyCovered();
+    segEl.saveBtn.disabled = full;
+    segEl.saveBtn.title = full ? (currentLang === "zh" ? "数据已全部切完，无法添加" : "All covered") : "";
+  }
+
+  function closeSegModal() { segEl.modal.classList.remove("show"); }
+  segEl.closeX.addEventListener('click', closeSegModal);
+  segEl.finishBtn.addEventListener('click', closeSegModal);
+
+  segEl.type.addEventListener('change', () => {
+    const lang = i18n[currentLang];
+    const t = segEl.type.value;
+    segEl.argLabel.textContent = t === 'split' ? lang.per_count : lang.per_count_count;
+    segEl.arg.value = t === 'split' ? 2000 : 5;
+  });
+
+  segEl.saveBtn.addEventListener('click', () => {
+    const maxEnd = validNumbers.length || 0;
+    let s = parseInt(segEl.start.value) || 0;
+    let e = parseInt(segEl.end.value) || 0;
+    const t = segEl.type.value;
+    let a = parseInt(segEl.arg.value);
+    const lang = i18n[currentLang];
+
+    if (isFullyCovered()) { segEl.saveBtn.disabled = true; return; }
+    if (s <= 0 || e <= 0) { alert(lang.gt0_error); return; }
+    if (s > e) { alert(lang.s_gt_e_error); return; }
+    if (e > maxEnd && maxEnd > 0) e = maxEnd;
+    if (isOverlap(s, e)) { alert(lang.overlap_error); return; }
+
+    const segLength = e - s + 1;
+    if (t === 'split' && (a <= 0 || a > segLength)) {
+      alert(lang.invalid_size_error); return;
+    }
+    if (t === 'count' && (a <= 0 || a > segLength)) {
+      alert(lang.invalid_count_error); return;
+    }
+
+    const item = { start: s, end: e, type: t, arg: a };
+    if (editIndex === -1) segmentList.push(item);
+    else segmentList[editIndex] = item;
+
+    updateSegStatus();
+    renderAddedList();
+
+    const full = isFullyCovered();
+    segEl.saveBtn.disabled = full;
+    segEl.saveBtn.title = full ? (currentLang === "zh" ? "数据已全部切完，无法添加" : "All covered") : "";
+
+    if (full) { segEl.start.value = ""; segEl.end.value = ""; }
+    else { segEl.start.value = e + 1; segEl.end.value = ""; }
+
+    editIndex = -1;
+    segEl.formTitle.textContent = lang.add_segment;
+    segEl.saveBtn.textContent = lang.add_btn;
+  });
+
+  function renderAddedList() {
+    segEl.addedList.innerHTML = "";
+    const lang = i18n[currentLang];
+    segmentList.forEach((seg, i) => {
+      let tt = seg.type === 'split' ? `${lang.split_by_size} ${seg.arg}` : `${lang.split_by_count} ${seg.arg}`;
+      const txt = `${seg.start}~${seg.end} | ${tt}`;
+      const div = document.createElement('div');
+      div.className = 'segment-item';
+      div.innerHTML = `
+        <span class="segment-text">${txt}</span>
+        <div>
+          <button class="btn btn-sm btn-edit" data-i="${i}">${lang.edit_btn}</button>
+          <button class="btn btn-sm btn-del" data-i="${i}">${lang.del_btn}</button>
+        </div>
+      `;
+      segEl.addedList.appendChild(div);
+    });
+    document.querySelectorAll('.btn-edit').forEach(b => {
+      b.onclick = () => {
+        const i = parseInt(b.dataset.i);
+        const seg = segmentList[i];
+        editIndex = i;
+        const lang = i18n[currentLang];
+        segEl.formTitle.textContent = lang.edit_btn;
+        segEl.saveBtn.textContent = lang.edit_btn;
+        segEl.start.value = seg.start;
+        segEl.end.value = seg.end;
+        segEl.type.value = seg.type;
+        segEl.arg.value = seg.arg;
+        segEl.saveBtn.disabled = false;
+        segEl.saveBtn.title = "";
+      };
+    });
+    document.querySelectorAll('.btn-del').forEach(b => {
+      b.onclick = () => {
+        const i = parseInt(b.dataset.i);
+        segmentList.splice(i, 1);
+        renderAddedList();
+        updateSegStatus();
+        const full = isFullyCovered();
+        segEl.saveBtn.disabled = full;
+        segEl.saveBtn.title = full ? (currentLang === "zh" ? "数据已全部切完，无法添加" : "All covered") : "";
+      };
+    });
+  }
+
+  // 统计
+  function updateStats() {
+    const t = el.numberInput.value.trim();
+    if (!t) {
+      validNumbers = []; el.validNum.textContent = 0; el.dupNum.textContent = 0; el.processBtn.disabled = true;
+      return;
+    }
+    const lines = t.split(/\n/).map(s => s.trim()).filter(Boolean);
+    const valid = lines.filter(s => PHONE_REGEX.test(s));
+    const unique = [...new Set(valid)];
+    validNumbers = unique;
+    el.validNum.textContent = unique.length;
+    el.dupNum.textContent = valid.length - unique.length;
+    el.processBtn.disabled = !unique.length;
+  }
+  el.numberInput.addEventListener('input', updateStats);
+
+  // 处理数据
+  el.processBtn.addEventListener('click', () => {
+    if (!validNumbers.length) return;
+    el.loading.classList.add('show');
+    setTimeout(() => {
+      if (currentMode === 'advanced') {
+        if (segmentList.length === 0) {
+          alert(i18n[currentLang].unadded);
+          openSegModal();
+          el.loading.classList.remove('show');
+          return;
+        }
+        doAdvanced();
+      } else {
+        doNormal();
+      }
+      el.resultWrapper.style.display = 'block';
+      el.loading.classList.remove('show');
+    }, 100);
+  });
+
+  function doNormal() {
+    chunks = []; selectedGroups.clear();
+    const vals = document.querySelectorAll('.config-input');
+    if (currentMode === 'size') {
+      const size = parseInt(vals[0].value) || 2000;
+      for (let i = 0; i < validNumbers.length; i += size) chunks.push(validNumbers.slice(i, i + size));
+    } else {
+      const cnt = parseInt(vals[1].value) || 5;
+      const per = Math.ceil(validNumbers.length / cnt);
+      for (let i = 0; i < validNumbers.length; i += per) chunks.push(validNumbers.slice(i, i + per));
+    }
+    renderTable();
+  }
+
+  function doAdvanced() {
+    chunks = []; selectedGroups.clear();
+    segmentList.forEach(seg => {
+      const slice = validNumbers.slice(seg.start - 1, seg.end);
+      if (!slice.length) return;
+      if (seg.type === 'split') {
+        const s = seg.arg;
+        for (let i = 0; i < slice.length; i += s) chunks.push(slice.slice(i, i + s));
+      } else {
+        const c = seg.arg;
+        const p = Math.ceil(slice.length / c);
+        for (let i = 0; i < slice.length; i += p) chunks.push(slice.slice(i, i + p));
+      }
+    });
+    renderTable();
+  }
+
+  // 渲染表格（带数量命名）
+  function renderTable() {
+    el.previewTable.innerHTML = '';
+    const lang = i18n[currentLang];
+    const maxRow = Math.max(...chunks.map(c => c.length), 0);
+    const head = document.createElement('thead');
+    const htr = document.createElement('tr');
+    chunks.forEach((c, i) => {
+      const th = document.createElement('th');
+      th.textContent = lang.group.replace('{{index}}', i+1).replace('{{count}}', c.length);
+      th.dataset.i = i;
+      th.className = selectedGroups.has(i) ? 'active' : '';
+      th.onclick = () => {
+        th.classList.toggle('active');
+        selectedGroups.has(i) ? selectedGroups.delete(i) : selectedGroups.add(i);
+      };
+      htr.appendChild(th);
+    });
+    head.appendChild(htr); el.previewTable.appendChild(head);
+    const body = document.createElement('tbody');
+    for (let r = 0; r < maxRow; r++) {
+      const tr = document.createElement('tr');
+      chunks.forEach(c => { const td = document.createElement('td'); td.textContent = c[r] || ''; tr.appendChild(td); });
+      body.appendChild(tr);
+    }
+    el.previewTable.appendChild(body);
+  }
+
+  // 导出选中TXT（多组独立导出）
+  el.exportSelectedTxt.onclick = () => {
+    if (selectedGroups.size === 0) { alert(i18n[currentLang].select_tip); return; }
+    const arr = [...selectedGroups].sort((a,b) => a-b);
+    const lang = i18n[currentLang];
+    arr.forEach(i => {
+      const name = lang.group.replace('{{index}}',i+1).replace('{{count}}',chunks[i].length) + ".txt";
+      saveAs(new Blob([chunks[i].join('\n')]), name);
+    });
+  };
+
+  // 导出全部TXT
+  el.exportAllTxt.onclick = () => {
+    const lang = i18n[currentLang];
+    chunks.forEach((c,i) => {
+      const name = lang.group.replace('{{index}}',i+1).replace('{{count}}',c.length) + ".txt";
+      saveAs(new Blob([c.join('\n')]), name);
+    });
+  };
+
+  // 分享选中TXT（多组独立分享，不合并）
+  el.shareSelectedTxt.onclick = async () => {
+    if (selectedGroups.size === 0) { alert(i18n[currentLang].select_tip); return; }
+    const arr = [...selectedGroups].sort((a,b) => a-b);
+    await shareMultipleTxt(arr);
+  };
+
+  // 分享全部TXT
+  el.shareAllTxt.onclick = async () => {
+    const indexes = chunks.map((_,i) => i);
+    await shareMultipleTxt(indexes);
+  };
+
+  // 核心：多组独立TXT分享（一个组一个文件分享）
+  async function shareMultipleTxt(indexArray) {
+    const lang = i18n[currentLang];
+    const files = [];
+    indexArray.forEach(i => {
+      const content = chunks[i].join('\n');
+      const fileName = lang.group.replace('{{index}}',i+1).replace('{{count}}',chunks[i].length) + ".txt";
+      const blob = new Blob([content], { type: 'text/plain' });
+      files.push(new File([blob], fileName, { type: 'text/plain' }));
+    });
+
+    if (navigator.share && files.length > 0) {
+      try {
+        await navigator.share({
+          files: files,
+          title: currentLang === "zh" ? "分享号码文件" : "Share Number Files",
+          text: currentLang === "zh" ? `共${files.length}个文件` : `${files.length} files`
+        });
+      } catch (err) {
+        console.log('分享取消或不支持');
+      }
+    } else {
+      alert(currentLang === "zh" ? "当前设备不支持批量分享，将自动下载文件" : "Batch share not supported, downloading...");
+      indexArray.forEach(i => {
+        const name = lang.group.replace('{{index}}',i+1).replace('{{count}}',chunks[i].length) + ".txt";
+        saveAs(new Blob([chunks[i].join('\n')]), name);
+      });
+    }
+  }
+
+  // 清空
+  el.clearBtn.onclick = () => {
+    el.numberInput.value = ''; updateStats();
+    segmentList = []; selectedGroups.clear();
+    updateSegStatus();
+    el.resultWrapper.style.display = 'none';
+    el.previewTable.innerHTML = '';
+  };
+
+  initFileDrop();
+  updateStats();
+  updateI18n();
+  updateSegStatus();
+</script>
+</body>
+</html>
