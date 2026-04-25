@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <title>号码切割工具</title>
+<script src="https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 * {
   margin: 0;
@@ -489,13 +491,6 @@ button:disabled {
   text-align: right;
 }
 
-/* 电脑端隐藏浏览器分享按钮，只在手机端显示 */
-@media (min-width: 769px) {
-  #shareSelectedTxt, #shareAllTxt {
-    display: none !important;
-  }
-}
-
 @media (max-width: 768px) {
   body {
     padding: 60px 12px 20px;
@@ -717,7 +712,7 @@ const i18n = {
     clear_btn: "清空重置",
     export_selected_txt: "导出选中TXT",
     share_selected_txt: "分享选中TXT",
-    export_all_txt: "导出全部ZIP",
+    export_all_txt: "导出全部TXT",
     share_all_txt: "分享全部TXT",
     add_segment: "添加分段",
     start_line: "起始行",
@@ -761,7 +756,7 @@ const i18n = {
     clear_btn: "Reset",
     export_selected_txt: "Export Selected",
     share_selected_txt: "Share Selected",
-    export_all_txt: "Export All ZIP",
+    export_all_txt: "Export All",
     share_all_txt: "Share All",
     add_segment: "Add Segment",
     start_line: "Start",
@@ -980,18 +975,6 @@ function isFullyCovered() {
   return true;
 }
 
-function getUncoveredCount() {
-  const total = validNumbers.length;
-  if (total === 0) return 0;
-  const used = new Set();
-  segmentList.forEach(s => {
-    const start = Math.max(1, s.start);
-    const end = Math.min(total, s.end);
-    for (let i = start; i <= end; i++) used.add(i);
-  });
-  return total - used.size;
-}
-
 function isOverlap(newStart, newEnd) {
   for (let i = 0; i < segmentList.length; i++) {
     if (i === editIndex) continue;
@@ -1141,16 +1124,6 @@ el.processBtn.addEventListener('click', () => {
         el.loading.classList.remove('show');
         return;
       }
-      const uncovered = getUncoveredCount();
-      if (uncovered > 0) {
-        const ok = confirm(currentLang === "zh"
-          ? `还有 ${uncovered} 个有效号码未被任何分段覆盖，是否继续？`
-          : `${uncovered} valid numbers are not covered by any segment. Continue?`);
-        if (!ok) {
-          el.loading.classList.remove('show');
-          return;
-        }
-      }
       doAdvanced();
     } else {
       doNormal();
@@ -1160,20 +1133,15 @@ el.processBtn.addEventListener('click', () => {
   }, 100);
 });
 
-function getPositiveInt(value, fallback) {
-  const n = parseInt(value, 10);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
-}
-
 function doNormal() {
   chunks = []; selectedGroups.clear();
   const vals = document.querySelectorAll('.config-input');
   if (currentMode === 'size') {
-    const size = getPositiveInt(vals[0].value, 2000);
+    const size = parseInt(vals[0].value) || 2000;
     for (let i = 0; i < validNumbers.length; i += size) chunks.push(validNumbers.slice(i, i + size));
   } else {
-    const cnt = getPositiveInt(vals[1].value, 5);
-    const per = Math.max(1, Math.ceil(validNumbers.length / cnt));
+    const cnt = parseInt(vals[1].value) || 5;
+    const per = Math.ceil(validNumbers.length / cnt);
     for (let i = 0; i < validNumbers.length; i += per) chunks.push(validNumbers.slice(i, i + per));
   }
   renderTable();
@@ -1223,172 +1191,22 @@ function renderTable() {
   el.previewTable.appendChild(body);
 }
 
-function safeFileName(name) {
-  return String(name).replace(/[\\/:*?\"<>|]/g, '_');
-}
-
-function getGroupFileName(i) {
-  const lang = i18n[currentLang];
-  return safeFileName(lang.group.replace('{{index}}', i + 1).replace('{{count}}', chunks[i].length) + ".txt");
-}
-
-function downloadBlob(blob, fileName) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 1000);
-}
-
-function makeTxtBlob(chunk) {
-  return new Blob([chunk.join('\n')], { type: 'text/plain;charset=utf-8' });
-}
-
-const CRC32_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) {
-      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
-    }
-    table[n] = c >>> 0;
-  }
-  return table;
-})();
-
-function crc32(bytes) {
-  let crc = 0xffffffff;
-  for (let i = 0; i < bytes.length; i++) {
-    crc = (CRC32_TABLE[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8)) >>> 0;
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function getDosDateTime(date = new Date()) {
-  const year = Math.max(1980, date.getFullYear());
-  const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
-  const dosDate = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
-  return { dosTime, dosDate };
-}
-
-function createZipFromIndexes(indexArray) {
-  if (!indexArray.length) {
-    throw new Error('No files selected');
-  }
-  if (indexArray.length > 65535) {
-    throw new Error('Too many files for standard ZIP');
-  }
-
-  const encoder = new TextEncoder();
-  const localParts = [];
-  const centralParts = [];
-  const { dosTime, dosDate } = getDosDateTime();
-  let offset = 0;
-
-  indexArray.forEach(i => {
-    const fileName = getGroupFileName(i);
-    const nameBytes = encoder.encode(fileName);
-    const data = encoder.encode(chunks[i].join('\n'));
-    const crc = crc32(data);
-
-    if (data.byteLength > 0xffffffff) {
-      throw new Error('Single file too large for standard ZIP');
-    }
-
-    const local = new ArrayBuffer(30 + nameBytes.length);
-    const lv = new DataView(local);
-    lv.setUint32(0, 0x04034b50, true);
-    lv.setUint16(4, 20, true);
-    lv.setUint16(6, 0x0800, true);
-    lv.setUint16(8, 0, true);
-    lv.setUint16(10, dosTime, true);
-    lv.setUint16(12, dosDate, true);
-    lv.setUint32(14, crc, true);
-    lv.setUint32(18, data.byteLength, true);
-    lv.setUint32(22, data.byteLength, true);
-    lv.setUint16(26, nameBytes.length, true);
-    lv.setUint16(28, 0, true);
-    new Uint8Array(local, 30).set(nameBytes);
-
-    localParts.push(local, data);
-
-    const central = new ArrayBuffer(46 + nameBytes.length);
-    const cv = new DataView(central);
-    cv.setUint32(0, 0x02014b50, true);
-    cv.setUint16(4, 20, true);
-    cv.setUint16(6, 20, true);
-    cv.setUint16(8, 0x0800, true);
-    cv.setUint16(10, 0, true);
-    cv.setUint16(12, dosTime, true);
-    cv.setUint16(14, dosDate, true);
-    cv.setUint32(16, crc, true);
-    cv.setUint32(20, data.byteLength, true);
-    cv.setUint32(24, data.byteLength, true);
-    cv.setUint16(28, nameBytes.length, true);
-    cv.setUint16(30, 0, true);
-    cv.setUint16(32, 0, true);
-    cv.setUint16(34, 0, true);
-    cv.setUint16(36, 0, true);
-    cv.setUint32(38, 0, true);
-    cv.setUint32(42, offset, true);
-    new Uint8Array(central, 46).set(nameBytes);
-
-    centralParts.push(central);
-    offset += local.byteLength + data.byteLength;
-  });
-
-  const centralSize = centralParts.reduce((sum, part) => sum + part.byteLength, 0);
-  const centralOffset = offset;
-
-  const end = new ArrayBuffer(22);
-  const ev = new DataView(end);
-  ev.setUint32(0, 0x06054b50, true);
-  ev.setUint16(4, 0, true);
-  ev.setUint16(6, 0, true);
-  ev.setUint16(8, indexArray.length, true);
-  ev.setUint16(10, indexArray.length, true);
-  ev.setUint32(12, centralSize, true);
-  ev.setUint32(16, centralOffset, true);
-  ev.setUint16(20, 0, true);
-
-  return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
-}
-
-function exportIndexes(indexArray, zipName, singleTxtWhenOne = false) {
-  if (!indexArray.length) return;
-
-  try {
-    if (singleTxtWhenOne && indexArray.length === 1) {
-      const i = indexArray[0];
-      downloadBlob(makeTxtBlob(chunks[i]), getGroupFileName(i));
-      return;
-    }
-
-    const zipBlob = createZipFromIndexes(indexArray);
-    downloadBlob(zipBlob, zipName);
-  } catch (err) {
-    alert(currentLang === "zh" ? `导出失败：${err.message}` : `Export failed: ${err.message}`);
-  }
-}
-
 el.exportSelectedTxt.onclick = () => {
   if (selectedGroups.size === 0) { alert(i18n[currentLang].select_tip); return; }
   const arr = [...selectedGroups].sort((a,b) => a-b);
-  const zipName = currentLang === "zh" ? "选中号码分组.zip" : "selected-number-groups.zip";
-  exportIndexes(arr, zipName, true);
+  const lang = i18n[currentLang];
+  arr.forEach(i => {
+    const name = lang.group.replace('{{index}}',i+1).replace('{{count}}',chunks[i].length) + ".txt";
+    saveAs(new Blob([chunks[i].join('\n')]), name);
+  });
 };
 
 el.exportAllTxt.onclick = () => {
-  if (!chunks.length) return;
-  const indexes = chunks.map((_, i) => i);
-  const zipName = currentLang === "zh" ? "号码分组.zip" : "number-groups.zip";
-  exportIndexes(indexes, zipName, false);
+  const lang = i18n[currentLang];
+  chunks.forEach((c,i) => {
+    const name = lang.group.replace('{{index}}',i+1).replace('{{count}}',c.length) + ".txt";
+    saveAs(new Blob([c.join('\n')]), name);
+  });
 };
 
 el.shareSelectedTxt.onclick = async () => {
@@ -1403,14 +1221,16 @@ el.shareAllTxt.onclick = async () => {
 };
 
 async function shareMultipleTxt(indexArray) {
-  if (!indexArray.length) return;
+  const lang = i18n[currentLang];
   const files = [];
   indexArray.forEach(i => {
-    const blob = makeTxtBlob(chunks[i]);
-    files.push(new File([blob], getGroupFileName(i), { type: 'text/plain' }));
+    const content = chunks[i].join('\n');
+    const fileName = lang.group.replace('{{index}}',i+1).replace('{{count}}',chunks[i].length) + ".txt";
+    const blob = new Blob([content], { type: 'text/plain' });
+    files.push(new File([blob], fileName, { type: 'text/plain' }));
   });
 
-  if (navigator.share && (!navigator.canShare || navigator.canShare({ files })) && files.length > 0) {
+  if (navigator.share && files.length > 0) {
     try {
       await navigator.share({
         files: files,
@@ -1418,12 +1238,14 @@ async function shareMultipleTxt(indexArray) {
         text: `${files.length} ${currentLang === "zh" ? "个文件" : "files"}`
       });
     } catch (err) {
-      console.log('Share canceled or failed', err);
+      console.log('Share canceled');
     }
   } else {
-    alert(currentLang === "zh" ? "当前浏览器不支持文件分享，已改为下载" : "File sharing is not supported, downloading instead...");
-    const zipName = currentLang === "zh" ? "分享号码分组.zip" : "shared-number-groups.zip";
-    exportIndexes(indexArray, zipName, true);
+    alert(currentLang === "zh" ? "不支持分享，已自动下载" : "Sharing not supported, downloading...");
+    indexArray.forEach(i => {
+      const name = lang.group.replace('{{index}}',i+1).replace('{{count}}',chunks[i].length) + ".txt";
+      saveAs(new Blob([chunks[i].join('\n')]), name);
+    });
   }
 }
 
