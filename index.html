@@ -25,6 +25,10 @@ body {
   margin: 0 auto;
 }
 
+:root {
+  --main-panel-height: 684px;
+}
+
 .lang-switch {
   position: fixed;
   top: 20px;
@@ -62,13 +66,15 @@ body {
 
 .top-row {
   display: flex;
+  align-items: stretch;
   gap: 24px;
   margin-bottom: 32px;
 }
 
-.col-input { width: 30%; }
-.col-middle { width: 30%; display: flex; flex-direction: column; gap: 24px; }
-.col-right { width: 40%; display: flex; flex-direction: column; gap: 24px; }
+.col-input { width: 30%; height: var(--main-panel-height); }
+.col-middle { width: 30%; height: var(--main-panel-height); display: flex; flex-direction: column; gap: 24px; }
+.col-right { width: 40%; height: var(--main-panel-height); display: flex; flex-direction: column; gap: 24px; }
+.col-input > .card { height: 100%; }
 
 /* ========== 核心修改：三个卡片全部用固定高度 ========== */
 .stat-card {
@@ -155,6 +161,31 @@ body {
   box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
 }
 
+.input-import-row {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.input-file-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px dashed #c7c7cc;
+  background: #fbfbfd;
+  color: #1d1d1f;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.22s;
+}
+.input-file-btn:hover {
+  background: #f2f7ff;
+  border-color: #007aff;
+  color: #007aff;
+  transform: translateY(-1px);
+}
+
 .import-card { height: 280px; }
 .drop-area {
   flex: 1;
@@ -185,7 +216,271 @@ body {
   overflow: hidden;
 }
 
+
+.page-drag-hint {
+  text-align: center;
+  color: #86868b;
+  font-size: 14px;
+  margin: -18px 0 28px;
+  letter-spacing: -0.1px;
+}
+
+.page-drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 245, 247, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: none;
+}
+.page-drop-overlay.show {
+  display: flex;
+}
+.page-drop-box {
+  width: min(520px, calc(100vw - 48px));
+  min-height: 180px;
+  border: 2px dashed #007aff;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #1d1d1f;
+  padding: 28px;
+}
+.page-drop-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaf4ff;
+  color: #007aff;
+  font-size: 30px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.page-drop-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.page-drop-desc {
+  font-size: 14px;
+  color: #86868b;
+}
+
 .config-card { height: auto; min-height: 380px; }
+
+/* 中间列：数据范围自适应高度，剩余空间补给切割配置 */
+.middle-card {
+  min-height: 0;
+  padding: 28px;
+}
+.middle-card .card-title {
+  margin-bottom: 18px;
+}
+.range-card {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.config-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;
+}
+.range-group,
+.middle-card .config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 0;
+}
+.range-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.range-item,
+.middle-card .config-item {
+  min-height: 56px;
+  height: auto;
+  padding: 14px 16px;
+  background: #f9f9fb;
+  border: 1px solid #e5e5ea;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+.range-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.range-item:hover,
+.middle-card .config-item:hover {
+  background: #fff;
+  border-color: #c9dfff;
+}
+.range-item.active,
+.middle-card .config-item.active {
+  background: #e4f3ff;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.08);
+}
+.range-main-text,
+.middle-card .config-text {
+  flex: 1;
+  font-size: 15px;
+  color: #1d1d1f;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.range-inline-text {
+  font-size: 15px;
+  color: #1d1d1f;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.range-input,
+.middle-card .config-input {
+  width: 74px;
+  height: 34px;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #d8d8df;
+  border-radius: 9px;
+  font-size: 14px;
+  text-align: center;
+}
+.range-input:focus,
+.middle-card .config-input:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+}
+.custom-range-item {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 10px;
+}
+.range-custom-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.range-custom-fields label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #ededf2;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+.range-custom-fields .range-input {
+  width: 68px;
+}
+.range-mini-tip {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #86868b;
+}
+.range-status {
+  position: absolute;
+  right: 16px;
+  bottom: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.range-status.unadded { color: #ff9500; }
+.range-status.added { color: #34c759; }
+.range-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.range-quick-btn {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e5ea;
+  background: #f9f9fb;
+  color: #1d1d1f;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.range-quick-btn:hover {
+  background: #e4f3ff;
+  border-color: #007aff;
+  color: #007aff;
+}
+
+.export-config-box {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #ededf2;
+}
+.export-config-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 10px;
+}
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.export-option {
+  min-height: 52px;
+  padding: 12px 14px;
+  background: #f9f9fb;
+  border: 1px solid #e5e5ea;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 14px;
+  font-weight: 650;
+  color: #1d1d1f;
+}
+.export-option:hover {
+  background: #fff;
+  border-color: #c9dfff;
+}
+.export-option.active {
+  background: #e4f3ff;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.08);
+}
+.export-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: #007aff;
+}
+
+.middle-card .seg-status {
+  right: 16px;
+  bottom: 5px;
+}
+
 .config-group {
   display: flex;
   flex-direction: column;
@@ -272,8 +567,11 @@ body {
   color: #fff;
 }
 .btn-second {
-  background: #f2f2f7;
+  background: #e5e5ea;
   color: #1d1d1f;
+}
+.btn-second:hover {
+  background: #d8d8df;
 }
 button:disabled {
   opacity: 0.4;
@@ -349,6 +647,11 @@ button:disabled {
   padding: 10px 16px;
   text-align: center;
   border-bottom: 1px solid #f0f0f5;
+}
+.preview-table td.active-col {
+  background: #eef6ff;
+  color: #007aff;
+  font-weight: 500;
 }
 .preview-table tr:nth-child(even) {
   background: #f9f9fb;
@@ -491,6 +794,61 @@ button:disabled {
   text-align: right;
 }
 
+
+
+/* ===== v18 布局修复：中间卡片高度 + 前/后输入项不溢出 ===== */
+@media (min-width: 769px) {
+  .col-middle {
+    min-height: 0;
+    overflow: visible;
+  }
+
+  /* 原 .card 默认 height:100%，会让数据范围卡片占满整列，导致切割配置被挤到下面。这里专门覆盖中间两张卡片。 */
+  .col-middle > .card.middle-card {
+    height: auto;
+    box-sizing: border-box;
+  }
+
+  .col-middle > .range-card {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .col-middle > .config-card {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .range-row {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .range-row .range-item {
+    min-width: 0;
+    width: 100%;
+    padding: 12px 10px;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .range-row .range-inline-text {
+    flex: 0 0 auto;
+    font-size: 14px;
+  }
+
+  .range-row .range-input {
+    width: 58px;
+    min-width: 0;
+    padding: 6px 4px;
+  }
+}
+
 @media (min-width: 769px) {
   #shareSelectedTxt,
   #shareAllTxt {
@@ -505,12 +863,32 @@ button:disabled {
   .page-title {
     font-size: 24px;
   }
+
+  .page-drag-hint {
+    margin: -14px 0 20px;
+    font-size: 13px;
+  }
   .top-row {
     flex-direction: column;
     gap: 16px;
   }
   .col-input, .col-middle, .col-right {
     width: 100%;
+    height: auto;
+  }
+  .col-input > .card {
+    height: auto;
+  }
+  .col-middle {
+    min-height: auto;
+  }
+  .middle-card {
+    min-height: auto;
+    padding: 24px;
+  }
+  .range-row,
+  .range-custom-fields {
+    grid-template-columns: 1fr;
   }
 
   /* 手机端卡片自动高度，不挤压、不拉伸 */
@@ -530,6 +908,10 @@ button:disabled {
   }
   .btn-block {
     height: 50px;
+  }
+  .input-file-btn {
+    height: 46px;
+    font-size: 14px;
   }
 
   /* 手机端预览表格横向滚动更友好 */
@@ -560,48 +942,505 @@ button:disabled {
     max-height: 50vh;
   }
 }
+
+
+/* ===== v20 布局修复：固定中文、三列等高、导出配置不溢出、自定义范围内联 ===== */
+.lang-switch { display: none !important; }
+
+@media (min-width: 769px) {
+  :root { --main-panel-height: 660px; }
+  .container { max-width: 1320px; }
+  .top-row { align-items: stretch; gap: 24px; }
+  .col-input,
+  .col-middle,
+  .col-right { height: var(--main-panel-height); }
+  .col-input { width: 31%; }
+  .col-middle { width: 29%; gap: 18px; }
+  .col-right { width: 40%; gap: 18px; }
+
+  .col-input > .card,
+  .col-middle > .card { height: auto; }
+  .col-input > .card { height: 100%; }
+
+  .middle-card { padding: 24px; }
+  .middle-card .card-title { margin-bottom: 16px; }
+  .col-middle > .range-card { flex: 0 0 auto; }
+  .col-middle > .config-card { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+
+  .range-group,
+  .middle-card .config-group { gap: 9px; }
+  .range-item,
+  .middle-card .config-item {
+    min-height: 52px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+  .middle-card .config-item { height: 52px; }
+  .middle-card .config-text,
+  .range-main-text { font-size: 14px; }
+  .middle-card .config-input { width: 72px; height: 32px; padding: 5px 8px; }
+
+  .range-row { gap: 8px; }
+  .range-row .range-item { padding: 10px 8px; }
+  .range-row .range-input { width: 56px; }
+  .range-row .range-inline-text { font-size: 13px; }
+
+  .custom-range-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 7px;
+    min-height: 54px;
+  }
+  .custom-range-item .range-main-text { flex: 1 1 auto; min-width: 72px; }
+  .custom-range-item .range-inline-text { font-size: 13px; flex: 0 0 auto; }
+  .custom-range-item .range-input { width: 54px; height: 32px; padding: 5px 4px; }
+
+  .export-config-box {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+  .export-config-title {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .export-options { gap: 8px; }
+  .export-option {
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .export-option input { width: 14px; height: 14px; }
+
+  .col-right > .stat-card { flex: 1.08 1 0; height: auto; min-height: 0; }
+  .col-right > .stat-row { flex: 0.88 1 0; min-height: 0; }
+  .stat-row .stat-card { height: 100%; }
+  .col-right .btn-block { height: 54px; flex: 0 0 54px; }
+}
+
+
+
+/* ===== v21 视觉修复：范围双按钮不撑出、导出配置横向压缩、三列等高 ===== */
+@media (min-width: 769px) {
+  :root { --main-panel-height: 660px; }
+
+  .col-middle { gap: 18px; }
+  .col-middle > .range-card { flex: 0 0 auto; }
+  .col-middle > .config-card { flex: 1 1 auto; overflow: visible; }
+  .middle-card { padding: 24px; }
+  .middle-card .card-title { margin-bottom: 16px; }
+
+  .range-group { gap: 9px; }
+  .range-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+  .range-row .range-item {
+    width: 100%;
+    min-width: 0;
+    height: 52px;
+    min-height: 52px;
+    padding: 0 10px;
+    justify-content: center;
+    gap: 7px;
+    overflow: hidden;
+  }
+  .range-row .range-inline-text {
+    flex: 0 0 auto;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .range-row .range-input {
+    flex: 0 0 66px;
+    width: 66px;
+    height: 32px;
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+  .range-item[data-range="all"], .custom-range-item { width: 100%; }
+  .custom-range-item {
+    display: grid;
+    grid-template-columns: minmax(78px, 1fr) auto 58px auto 58px;
+    align-items: center;
+    gap: 7px;
+    min-height: 52px;
+    padding: 10px 12px;
+  }
+  .custom-range-item .range-main-text { min-width: 0; }
+  .custom-range-item .range-input {
+    width: 58px;
+    height: 32px;
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+
+  .middle-card .config-group { gap: 9px; }
+  .middle-card .config-item {
+    height: 50px;
+    min-height: 50px;
+    padding: 10px 14px;
+  }
+  .middle-card .config-input { width: 72px; height: 32px; }
+
+  .export-config-box {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #ededf2;
+  }
+  .export-config-title {
+    font-size: 13px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .export-options {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+  .export-option {
+    min-width: 0;
+    min-height: 42px;
+    height: 42px;
+    padding: 0 10px;
+    border-radius: 12px;
+    gap: 7px;
+    font-size: 12.5px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .export-option span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .export-option input {
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+
+/* ===== v22：隐藏所有数字输入框的上下调节按钮，避免五位数被遮挡 ===== */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.range-input,
+.middle-card .config-input,
+.config-input,
+.modal-form-item input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 769px) {
+  .range-row .range-input {
+    flex-basis: 78px;
+    width: 78px;
+    min-width: 78px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .custom-range-item {
+    grid-template-columns: minmax(78px, 1fr) auto 70px auto 70px;
+  }
+  .custom-range-item .range-input {
+    width: 70px;
+    min-width: 70px;
+  }
+  .middle-card .config-input {
+    width: 84px;
+    min-width: 84px;
+  }
+}
+
+
+
+/* ===== v27：对齐右侧统计卡片与中间配置区域 ===== */
+@media (min-width: 769px) {
+  :root {
+    --main-panel-height: 660px;
+    --top-section-height: 245px;
+    --panel-gap: 18px;
+  }
+
+  .top-row {
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .col-input,
+  .col-middle,
+  .col-right {
+    height: var(--main-panel-height) !important;
+  }
+
+  .col-middle,
+  .col-right {
+    gap: var(--panel-gap) !important;
+  }
+
+  .col-input > .card {
+    height: 100% !important;
+  }
+
+  /* 数据范围卡片与有效号码卡片等高 */
+  .col-middle > .range-card,
+  .col-right > #validCard {
+    flex: 0 0 var(--top-section-height) !important;
+    height: var(--top-section-height) !important;
+    min-height: var(--top-section-height) !important;
+    max-height: var(--top-section-height) !important;
+    overflow: hidden;
+  }
+
+  /* 切割配置从与重复/无效卡片同一水平线开始 */
+  .col-middle > .config-card {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: visible;
+  }
+
+  .col-right > .stat-row {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  .stat-row .stat-card {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  .col-right .btn-block {
+    flex: 0 0 54px !important;
+    height: 54px !important;
+  }
+
+  /* 细调数据范围内部间距，避免等高后内容拥挤 */
+  .range-card.middle-card {
+    padding-top: 24px;
+    padding-bottom: 20px;
+  }
+
+  .range-card .card-title {
+    margin-bottom: 15px;
+  }
+
+  .range-card .range-group {
+    gap: 8px;
+  }
+
+  .range-card .range-item[data-range="all"],
+  .range-card .range-row .range-item,
+  .range-card .custom-range-item {
+    height: 50px;
+    min-height: 50px;
+  }
+
+  .range-card .range-row {
+    gap: 8px;
+  }
+
+  .range-card .range-row .range-item {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .range-card .custom-range-item {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+
+/* ===== v28：直接导出模式固定首屏高度 + 全局滚动条美化 ===== */
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+body.export-direct {
+  overflow-y: hidden;
+}
+
+body.export-preview {
+  overflow-y: auto;
+}
+
+/* 全局滚动条：更细、更浅、更接近当前苹果风 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 128, 0.42) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 128, 0.32);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 128, 0.52);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media (min-width: 769px) {
+  body {
+    padding: 38px 20px 24px;
+  }
+
+  .page-title {
+    padding: 0;
+    margin: 0 0 24px 0;
+  }
+
+  .page-drag-hint {
+    margin: 0 0 28px;
+  }
+
+  .top-row {
+    margin-bottom: 0;
+  }
+
+  /* 直接导出模式：固定在首屏内，不出现页面级上下滚动 */
+  body.export-direct {
+    min-height: 100vh;
+  }
+
+  body.export-direct .container {
+    max-height: calc(100vh - 62px);
+    overflow: visible;
+  }
+
+  body.export-direct .top-row {
+    height: min(var(--main-panel-height), calc(100vh - 220px));
+  }
+
+  body.export-direct .col-input,
+  body.export-direct .col-middle,
+  body.export-direct .col-right {
+    height: min(var(--main-panel-height), calc(100vh - 220px)) !important;
+  }
+
+  body.export-direct .preview-wrapper {
+    display: none !important;
+  }
+
+  /* 预览模式：允许页面下滑查看预览区 */
+  body.export-preview .top-row {
+    margin-bottom: 32px;
+  }
+}
+
 </style>
 </head>
-<body>
+<body class="export-direct">
 <div class="loading-mask" id="loading">处理中...</div>
-<button class="lang-switch" id="langSwitch">English</button>
-
+<div class="page-drop-overlay" id="pageDropOverlay">
+  <div class="page-drop-box">
+    <div class="page-drop-icon">+</div>
+    <div class="page-drop-title" data-i18n="drag_overlay_title">检测到文件拖入</div>
+    <div class="page-drop-desc" data-i18n="drag_overlay_desc">松开鼠标即可导入 TXT 文件</div>
+  </div>
+</div>
 <div class="container">
   <h1 class="page-title" data-i18n="page_title">号码切割工具</h1>
+  <div class="page-drag-hint" data-i18n="drag_hint">可将 TXT 文件拖入页面任意空白处导入号码</div>
   <div class="top-row">
     <!-- 左侧：号码输入 -->
     <div class="col-input">
       <div class="card">
         <h2 class="card-title" data-i18n="input_title">号码输入</h2>
         <textarea id="numberInput" placeholder="示例：+1 (500) 000-0000" data-i18n-placeholder="input_placeholder"></textarea>
+        <div class="input-import-row">
+          <button class="input-file-btn" type="button" id="importFileBtn" data-i18n="import_file_btn">点击导入 TXT / Excel 文件</button>
+          <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls" />
+        </div>
       </div>
     </div>
 
-    <!-- 中间：文件导入 + 切割配置 -->
+    <!-- 中间：数据范围 + 切割配置 -->
     <div class="col-middle">
-      <div class="card import-card">
-        <h2 class="card-title" data-i18n="import_title">文件导入</h2>
-        <div class="drop-area" id="dropArea">
-          <div class="drop-title" data-i18n="drop_title">点击或拖入文件</div>
-          <div class="drop-desc" data-i18n="drop_desc">支持 TXT</div>
+      <div class="card middle-card range-card">
+        <h2 class="card-title" data-i18n="range_title">数据范围</h2>
+        <div class="range-group">
+          <div class="range-item active" data-range="all">
+            <div class="range-main-text" data-i18n="range_all">全部数据</div>
+          </div>
+
+          <div class="range-row">
+            <div class="range-item" data-range="first">
+              <span class="range-inline-text" data-i18n="range_first_prefix">前</span>
+              <input type="number" class="range-input" id="rangeFirstInput" min="1" value="2000">
+              <span class="range-inline-text" data-i18n="range_unit">条</span>
+            </div>
+            <div class="range-item" data-range="last">
+              <span class="range-inline-text" data-i18n="range_last_prefix">后</span>
+              <input type="number" class="range-input" id="rangeLastInput" min="1" value="2000">
+              <span class="range-inline-text" data-i18n="range_unit">条</span>
+            </div>
+          </div>
+
+          <div class="range-item custom-range-item" data-range="custom">
+            <div class="range-main-text" data-i18n="range_custom">自定义范围</div>
+            <span class="range-inline-text" data-i18n="range_custom_start_short">从</span>
+            <input type="number" class="range-input" id="rangeCustomStartInput" min="1" value="1" placeholder="1">
+            <span class="range-inline-text" data-i18n="range_custom_end_short">到</span>
+            <input type="number" class="range-input" id="rangeCustomEndInput" min="1" placeholder="最后">
+          </div>
         </div>
-        <input type="file" id="fileInput" accept=".txt">
       </div>
 
-      <div class="card config-card">
+      <div class="card middle-card config-card">
         <h2 class="card-title" data-i18n="config_title">切割配置</h2>
         <div class="config-group">
-          <div class="config-item active" data-mode="size">
-            <div class="config-text" data-i18n="size_text">按每份数量切割</div>
-            <input type="number" class="config-input" min="1" value="2000">
-          </div>
-          <div class="config-item" data-mode="count">
+          <div class="config-item active" data-mode="count">
             <div class="config-text" data-i18n="count_text">按总份数平均</div>
-            <input type="number" class="config-input" min="1" value="5">
+            <input type="number" class="config-input" id="splitCountInput" min="1" value="1">
+          </div>
+          <div class="config-item" data-mode="size">
+            <div class="config-text" data-i18n="size_text">按每份数量切割</div>
+            <input type="number" class="config-input" id="splitSizeInput" min="1" value="2000">
           </div>
           <div class="config-item" data-mode="advanced">
             <div class="config-text" data-i18n="advanced_text">自定义分段切割</div>
             <div class="seg-status unadded" data-i18n="unadded">⚠️ 未添加分段配置</div>
+          </div>
+        </div>
+
+        <div class="export-config-box">
+          <div class="export-config-title" data-i18n="export_config_title">导出配置</div>
+          <div class="export-options">
+            <label class="export-option active" data-export="direct">
+              <input type="radio" name="exportMode" value="direct" checked>
+              <span data-i18n="export_direct_doc">直接导出 TXT</span>
+            </label>
+            <label class="export-option" data-export="preview">
+              <input type="radio" name="exportMode" value="preview">
+              <span data-i18n="export_preview_split">预览后选择导出</span>
+            </label>
           </div>
         </div>
       </div>
@@ -646,6 +1485,41 @@ button:disabled {
       </div>
     </div>
   </div>
+</div>
+
+<div class="modal-overlay" id="rangeModal">
+  <div class="modal-split">
+    <div class="modal-left">
+      <div class="modal-header">
+        <h3 id="rangeFormTitle" data-i18n="range_add_title">添加范围</h3>
+      </div>
+      <div class="range-modal-actions">
+        <button class="range-quick-btn" id="rangeQuickAll" data-i18n="range_quick_all">全部</button>
+        <button class="range-quick-btn" id="rangeQuickLast" data-i18n="range_quick_last">最后2000</button>
+        <button class="range-quick-btn" id="rangeQuickNext" data-i18n="range_quick_next">接着上段</button>
+      </div>
+      <div class="modal-form-item">
+        <label data-i18n="range_modal_start">起始条数</label>
+        <input type="number" id="rangeSegStart" value="1" min="1">
+      </div>
+      <div class="modal-form-item">
+        <label data-i18n="range_modal_end">结束条数</label>
+        <input type="number" id="rangeSegEnd" placeholder="留空默认到最后">
+      </div>
+      <div class="range-mini-tip" data-i18n="range_modal_tip">可添加多个不重叠范围，会按起始顺序合并为当前数据范围。</div>
+      <button class="btn btn-primary" id="saveRangeBtn" data-i18n="add_btn">添加</button>
+    </div>
+    <div class="modal-right">
+      <div class="modal-header">
+        <h3 data-i18n="range_added_title">已添加范围</h3>
+      </div>
+      <div class="added-list" id="rangeAddedList"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="finishRangeBtn" data-i18n="finish_btn">完成</button>
+      </div>
+    </div>
+  </div>
+  <button class="modal-close" id="closeRangeModal">×</button>
 </div>
 
 <div class="modal-overlay" id="segModal">
@@ -705,7 +1579,46 @@ const i18n = {
     import_title: "文件导入",
     drop_title: "点击或拖入文件",
     drop_desc: "支持 TXT",
+    drag_hint: "可将 TXT / Excel 文件拖入页面任意空白处导入号码",
+    drag_overlay_title: "检测到文件拖入",
+    drag_overlay_desc: "松开鼠标即可导入 TXT / Excel 文件",
+    file_type_error: "只支持 TXT、CSV、XLSX 文件，旧版 XLS 暂不支持",
+    file_read_error: "文件读取失败",
+    import_file_btn: "点击导入 TXT / Excel 文件",
+    xls_not_supported: "旧版 .xls 文件暂不支持，请另存为 .xlsx 后再导入",
+    excel_empty_error: "没有在第一个工作表的 A 列读取到数据",
+    excel_parse_error: "Excel 解析失败，请确认文件为标准 .xlsx 格式",
+    range_title: "数据范围",
+    range_all: "全部数据",
+    range_first_prefix: "前",
+    range_last_prefix: "后",
+    range_unit: "条",
+    range_custom: "自定义范围",
+    range_custom_start_short: "从",
+    range_custom_end_short: "到",
+    range_unadded: "⚠️ 未添加范围",
+    range_added: "✅ 已添加{{count}}个范围",
+    range_add_title: "添加范围",
+    range_added_title: "已添加范围",
+    range_modal_start: "起始条数",
+    range_modal_end: "结束条数",
+    range_modal_tip: "可添加多个不重叠范围，会按起始顺序合并为当前数据范围。",
+    range_quick_all: "全部",
+    range_quick_last: "最后2000",
+    range_quick_next: "接着上段",
+    range_overlap_error: "❌ 该范围与已添加范围重叠，禁止添加！",
+    range_no_custom_error: "❌ 请先添加自定义范围！",
+    range_custom_start: "从第",
+    range_custom_end: "到第",
+    range_custom_tip: "包含起始和结束；结束留空时默认到最后一条",
+    range_invalid_error: "❌ 数据范围无效，请检查起始和结束条数！",
+    range_empty_error: "❌ 当前数据范围内没有有效号码！",
     config_title: "切割配置",
+    direct_text: "直接导出 TXT",
+    export_config_title: "导出配置",
+    export_direct_doc: "直接导出 TXT",
+    export_preview_split: "预览后选择导出",
+    direct_export_file_name: "当前号码结果.txt",
     size_text: "按每份数量切割",
     count_text: "按总份数平均",
     advanced_text: "自定义分段切割",
@@ -742,50 +1655,6 @@ const i18n = {
     invalid_count_error: "❌ 份数必须大于0且不大于分段长度！",
     select_tip: "请先选中分组"
   },
-  en: {
-    page_title: "Number Splitter",
-    input_title: "Numbers",
-    input_placeholder: "Example: +1 (500) 000-0000",
-    import_title: "Import",
-    drop_title: "Click or Drag",
-    drop_desc: "TXT only",
-    config_title: "Split Config",
-    size_text: "By Size",
-    count_text: "By Count",
-    advanced_text: "Custom Split",
-    unadded: "⚠️ No segments",
-    added: "✅ Ready",
-    valid_label: "Valid",
-    dup_label: "Duplicates",
-    invalid_label: "Invalid",
-    preview_tip: "Click to view",
-    process_btn: "Process",
-    clear_btn: "Reset",
-    export_selected_txt: "Export Selected",
-    share_selected_txt: "Share Selected",
-    export_all_txt: "Export All",
-    share_all_txt: "Share All",
-    add_segment: "Add Segment",
-    start_line: "Start",
-    end_line: "End",
-    split_type: "Mode",
-    split_by_size: "By Size",
-    split_by_count: "By Count",
-    per_count: "Size",
-    per_count_count: "Count",
-    add_btn: "Add",
-    edit_btn: "Edit",
-    del_btn: "Delete",
-    added_segments: "Segments",
-    finish_btn: "Done",
-    group: "G{{index}}-{{count}}",
-    overlap_error: "Overlap!",
-    s_gt_e_error: "Start > End!",
-    gt0_error: "Must >0",
-    invalid_size_error: "Invalid size",
-    invalid_count_error: "Invalid count",
-    select_tip: "Select groups first"
-  }
 };
 
 let currentLang = "zh";
@@ -794,14 +1663,28 @@ let validNumbers = [];
 let duplicateNumbers = [];
 let invalidNumbers = [];
 let chunks = [];
-let currentMode = "size";
+let currentMode = "count";
+let rangeMode = "all";
+let exportMode = "direct";
+let workingNumbers = [];
+let importedFileBaseName = "号码";
+let rangeList = [];
+let rangeEditIndex = -1;
 let segmentList = [];
 let editIndex = -1;
 
 const el = {
   numberInput: document.getElementById('numberInput'),
+  rangeFirstInput: document.getElementById('rangeFirstInput'),
+  rangeLastInput: document.getElementById('rangeLastInput'),
+  rangeCustomStartInput: document.getElementById('rangeCustomStartInput'),
+  rangeCustomEndInput: document.getElementById('rangeCustomEndInput'),
+  rangeStatus: document.getElementById('rangeStatus'),
+  splitCountInput: document.getElementById('splitCountInput'),
+  splitSizeInput: document.getElementById('splitSizeInput'),
   dropArea: document.getElementById('dropArea'),
   fileInput: document.getElementById('fileInput'),
+  importFileBtn: document.getElementById('importFileBtn'),
   processBtn: document.getElementById('processBtn'),
   clearBtn: document.getElementById('clearBtn'),
   validNum: document.getElementById('validNum'),
@@ -834,6 +1717,20 @@ const segEl = {
   saveBtn: document.getElementById('saveSegBtn'),
   addedList: document.getElementById('addedList'),
   finishBtn: document.getElementById('finishSegBtn')
+};
+
+const rangeEl = {
+  modal: document.getElementById('rangeModal'),
+  closeX: document.getElementById('closeRangeModal'),
+  formTitle: document.getElementById('rangeFormTitle'),
+  start: document.getElementById('rangeSegStart'),
+  end: document.getElementById('rangeSegEnd'),
+  saveBtn: document.getElementById('saveRangeBtn'),
+  addedList: document.getElementById('rangeAddedList'),
+  finishBtn: document.getElementById('finishRangeBtn'),
+  quickAll: document.getElementById('rangeQuickAll'),
+  quickLast: document.getElementById('rangeQuickLast'),
+  quickNext: document.getElementById('rangeQuickNext')
 };
 
 const listModal = document.getElementById('listModal');
@@ -925,13 +1822,7 @@ function updateStats() {
   else el.invalidCard.removeAttribute('clickable');
 }
 
-el.langSwitch.addEventListener('click', () => {
-  currentLang = currentLang === "zh" ? "en" : "zh";
-  el.langSwitch.textContent = currentLang === "zh" ? "English" : "中文";
-  updateI18n();
-  updateSegStatus();
-  renderTable();
-});
+// 英文模式已删除，界面固定为中文。
 
 function updateI18n() {
   const lang = i18n[currentLang];
@@ -948,24 +1839,557 @@ function updateI18n() {
 }
 
 function initFileDrop() {
-  el.dropArea.onclick = () => el.fileInput.click();
-  el.fileInput.onchange = () => {
-    const f = el.fileInput.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = e => { el.numberInput.value = e.target.result; updateStats(); };
-    r.readAsText(f);
-  };
-  el.dropArea.addEventListener('dragover', (e) => { e.preventDefault(); el.dropArea.classList.add('dragover'); });
-  el.dropArea.addEventListener('dragenter', (e) => { e.preventDefault(); el.dropArea.classList.add('dragover'); });
-  el.dropArea.addEventListener('dragleave', () => { el.dropArea.classList.remove('dragover'); });
-  el.dropArea.addEventListener('drop', (e) => {
-    e.preventDefault(); el.dropArea.classList.remove('dragover');
-    const f = e.dataTransfer.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = e => { el.numberInput.value = e.target.result; updateStats(); };
-    r.readAsText(f);
+  const overlay = document.getElementById('pageDropOverlay');
+
+  function hasFiles(e) {
+    return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  }
+
+  function getFileKind(file) {
+    const name = (file && file.name ? file.name : '').toLowerCase();
+    if (name.endsWith('.txt')) return 'txt';
+    if (name.endsWith('.csv')) return 'csv';
+    if (name.endsWith('.xlsx')) return 'xlsx';
+    if (name.endsWith('.xls')) return 'xls';
+    if (file && file.type === 'text/plain') return 'txt';
+    return '';
+  }
+
+  function resetAfterImport() {
+    segmentList = [];
+    rangeList = [];
+    selectedGroups.clear();
+    chunks = [];
+    workingNumbers = [];
+    updateSegStatus();
+    updateRangeStatus();
+    el.resultWrapper.style.display = 'none';
+    el.previewTable.innerHTML = '';
+  }
+
+  function applyImportedText(text) {
+    el.numberInput.value = text || '';
+    resetAfterImport();
+    updateStats();
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result || '');
+      reader.onerror = reject;
+      reader.readAsText(file, 'utf-8');
+    });
+  }
+
+  function parseCsvFirstColumn(text) {
+    const rows = String(text || '').split(/\r?\n/);
+    return rows.map(row => {
+      const line = row.trim();
+      if (!line) return '';
+      if (line.startsWith('"')) {
+        let value = '';
+        for (let i = 1; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"' && line[i + 1] === '"') {
+            value += '"';
+            i++;
+          } else if (ch === '"') {
+            break;
+          } else {
+            value += ch;
+          }
+        }
+        return value.trim();
+      }
+      return line.split(',')[0].trim();
+    }).filter(Boolean).join('\n');
+  }
+
+  function findEndOfCentralDirectory(view) {
+    const min = Math.max(0, view.byteLength - 0xffff - 22);
+    for (let i = view.byteLength - 22; i >= min; i--) {
+      if (view.getUint32(i, true) === 0x06054b50) return i;
+    }
+    return -1;
+  }
+
+  function parseZipDirectory(buffer) {
+    const view = new DataView(buffer);
+    const eocd = findEndOfCentralDirectory(view);
+    if (eocd < 0) throw new Error('ZIP EOCD not found');
+
+    const totalEntries = view.getUint16(eocd + 10, true);
+    const centralOffset = view.getUint32(eocd + 16, true);
+    const entries = {};
+    let ptr = centralOffset;
+    const decoder = new TextDecoder('utf-8');
+
+    for (let i = 0; i < totalEntries; i++) {
+      if (view.getUint32(ptr, true) !== 0x02014b50) break;
+      const method = view.getUint16(ptr + 10, true);
+      const compressedSize = view.getUint32(ptr + 20, true);
+      const uncompressedSize = view.getUint32(ptr + 24, true);
+      const nameLen = view.getUint16(ptr + 28, true);
+      const extraLen = view.getUint16(ptr + 30, true);
+      const commentLen = view.getUint16(ptr + 32, true);
+      const localOffset = view.getUint32(ptr + 42, true);
+      const nameBytes = new Uint8Array(buffer, ptr + 46, nameLen);
+      const name = decoder.decode(nameBytes);
+
+      entries[name] = { name, method, compressedSize, uncompressedSize, localOffset, buffer };
+      ptr += 46 + nameLen + extraLen + commentLen;
+    }
+
+    return entries;
+  }
+
+  async function inflateRaw(bytes) {
+    if (typeof DecompressionStream === 'undefined') {
+      throw new Error('DecompressionStream not supported');
+    }
+
+    try {
+      const ds = new DecompressionStream('deflate-raw');
+      const writer = ds.writable.getWriter();
+      await writer.write(bytes);
+      await writer.close();
+      return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    } catch (err) {
+      const ds = new DecompressionStream('deflate');
+      const writer = ds.writable.getWriter();
+      await writer.write(bytes);
+      await writer.close();
+      return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    }
+  }
+
+  async function readZipEntry(entries, name) {
+    const entry = entries[name];
+    if (!entry) return '';
+
+    const view = new DataView(entry.buffer);
+    const localOffset = entry.localOffset;
+    if (view.getUint32(localOffset, true) !== 0x04034b50) throw new Error('Invalid local header');
+
+    const localNameLen = view.getUint16(localOffset + 26, true);
+    const localExtraLen = view.getUint16(localOffset + 28, true);
+    const dataStart = localOffset + 30 + localNameLen + localExtraLen;
+    const compressed = new Uint8Array(entry.buffer, dataStart, entry.compressedSize);
+
+    let data;
+    if (entry.method === 0) {
+      data = compressed;
+    } else if (entry.method === 8) {
+      data = await inflateRaw(compressed);
+    } else {
+      throw new Error('Unsupported ZIP compression method: ' + entry.method);
+    }
+
+    return new TextDecoder('utf-8').decode(data);
+  }
+
+  function parseXml(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) throw new Error('XML parse error');
+    return doc;
+  }
+
+  function getRelMap(relsXml) {
+    const map = {};
+    if (!relsXml) return map;
+    const doc = parseXml(relsXml);
+    Array.from(doc.getElementsByTagName('Relationship')).forEach(rel => {
+      map[rel.getAttribute('Id')] = rel.getAttribute('Target');
+    });
+    return map;
+  }
+
+  function resolveSheetPath(workbookXml, relsXml) {
+    const workbook = parseXml(workbookXml);
+    const firstSheet = workbook.getElementsByTagName('sheet')[0];
+    if (!firstSheet) return 'xl/worksheets/sheet1.xml';
+
+    const rid = firstSheet.getAttribute('r:id') || firstSheet.getAttribute('id');
+    const relMap = getRelMap(relsXml);
+    let target = rid && relMap[rid] ? relMap[rid] : 'worksheets/sheet1.xml';
+
+    if (target.startsWith('/')) target = target.slice(1);
+    if (!target.startsWith('xl/')) target = 'xl/' + target;
+    return target;
+  }
+
+  function parseSharedStrings(sharedXml) {
+    if (!sharedXml) return [];
+    const doc = parseXml(sharedXml);
+    return Array.from(doc.getElementsByTagName('si')).map(si => {
+      return Array.from(si.getElementsByTagName('t')).map(t => t.textContent || '').join('');
+    });
+  }
+
+  function normalizeExcelValue(value) {
+    let text = String(value == null ? '' : value).trim();
+    if (/^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(text)) {
+      const n = Number(text);
+      if (Number.isFinite(n)) text = Math.round(n).toString();
+    }
+    return text;
+  }
+
+  function extractAColumn(sheetXml, sharedStrings) {
+    const doc = parseXml(sheetXml);
+    const cells = Array.from(doc.getElementsByTagName('c'));
+    const values = [];
+
+    cells.forEach((cell, index) => {
+      const ref = cell.getAttribute('r') || '';
+      if (ref && !/^A\d+$/i.test(ref)) return;
+      if (!ref && index !== 0) return;
+
+      const rowMatch = ref.match(/\d+/);
+      const row = rowMatch ? parseInt(rowMatch[0], 10) : index + 1;
+      const type = cell.getAttribute('t');
+      let value = '';
+
+      if (type === 's') {
+        const v = cell.getElementsByTagName('v')[0];
+        const idx = v ? parseInt(v.textContent, 10) : -1;
+        value = sharedStrings[idx] || '';
+      } else if (type === 'inlineStr') {
+        value = Array.from(cell.getElementsByTagName('t')).map(t => t.textContent || '').join('');
+      } else {
+        const v = cell.getElementsByTagName('v')[0];
+        value = v ? v.textContent : '';
+      }
+
+      value = normalizeExcelValue(value);
+      if (value) values.push({ row, value });
+    });
+
+    values.sort((a, b) => a.row - b.row);
+    return values.map(item => item.value).join('\n');
+  }
+
+  async function importXlsxFile(file) {
+    const buffer = await file.arrayBuffer();
+    const entries = parseZipDirectory(buffer);
+    const workbookXml = await readZipEntry(entries, 'xl/workbook.xml');
+    const relsXml = await readZipEntry(entries, 'xl/_rels/workbook.xml.rels');
+    const sharedXml = await readZipEntry(entries, 'xl/sharedStrings.xml');
+    const sheetPath = resolveSheetPath(workbookXml, relsXml);
+    const sheetXml = await readZipEntry(entries, sheetPath);
+    const sharedStrings = parseSharedStrings(sharedXml);
+    return extractAColumn(sheetXml, sharedStrings);
+  }
+
+  async function importFile(file) {
+    const lang = i18n[currentLang];
+    const kind = getFileKind(file);
+
+    if (!kind) {
+      alert(lang.file_type_error);
+      return;
+    }
+    if (kind === 'xls') {
+      alert(lang.xls_not_supported || lang.file_type_error);
+      return;
+    }
+
+    try {
+      el.loading.classList.add('show');
+      let text = '';
+
+      if (kind === 'txt') {
+        text = await readFileAsText(file);
+      } else if (kind === 'csv') {
+        text = parseCsvFirstColumn(await readFileAsText(file));
+      } else if (kind === 'xlsx') {
+        text = await importXlsxFile(file);
+      }
+
+      if (!String(text || '').trim()) {
+        alert(kind === 'xlsx' ? (lang.excel_empty_error || lang.range_empty_error) : lang.file_read_error);
+        return;
+      }
+
+      importedFileBaseName = stripFileExtension(file && file.name);
+      applyImportedText(text);
+    } catch (err) {
+      console.error(err);
+      alert(kind === 'xlsx' ? (lang.excel_parse_error || lang.file_read_error) : lang.file_read_error);
+    } finally {
+      el.loading.classList.remove('show');
+      if (el.fileInput) el.fileInput.value = '';
+    }
+  }
+
+  function showOverlay() {
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function hideOverlay() {
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  if (el.importFileBtn && el.fileInput) {
+    el.importFileBtn.addEventListener('click', () => el.fileInput.click());
+    el.fileInput.addEventListener('change', () => {
+      const file = el.fileInput.files && el.fileInput.files[0];
+      if (file) importFile(file);
+    });
+  }
+
+  document.addEventListener('dragenter', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    showOverlay();
+  });
+
+  document.addEventListener('dragover', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    showOverlay();
+  });
+
+  document.addEventListener('dragleave', e => {
+    if (!hasFiles(e)) return;
+    const leavingWindow =
+      e.clientX <= 0 || e.clientY <= 0 ||
+      e.clientX >= window.innerWidth || e.clientY >= window.innerHeight;
+    if (leavingWindow) hideOverlay();
+  });
+
+  document.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    hideOverlay();
+
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!file) return;
+    importFile(file);
+  });
+}
+function resetPreviewOnly() {
+  chunks = [];
+  selectedGroups.clear();
+  workingNumbers = [];
+  el.resultWrapper.style.display = 'none';
+  el.previewTable.innerHTML = '';
+}
+
+function resetRangeDependentState() {
+  resetPreviewOnly();
+  segmentList = [];
+  editIndex = -1;
+  updateSegStatus();
+}
+
+function setExportMode(mode) {
+  exportMode = mode === 'direct' ? 'direct' : 'preview';
+  document.body.classList.toggle('export-direct', exportMode === 'direct');
+  document.body.classList.toggle('export-preview', exportMode === 'preview');
+  document.querySelectorAll('.export-option').forEach(option => {
+    const active = option.dataset.export === exportMode;
+    option.classList.toggle('active', active);
+    const radio = option.querySelector('input[type="radio"]');
+    if (radio) radio.checked = active;
+  });
+}
+
+function setDefaultExportModeByRange(mode) {
+  // 切换数据范围时，默认回到直接导出 TXT。
+  // 用户仍可手动改成“预览后选择导出”。
+  setExportMode('direct');
+}
+
+document.querySelectorAll('.export-option').forEach(option => {
+  option.addEventListener('click', () => {
+    setExportMode(option.dataset.export || 'preview');
+    resetPreviewOnly();
+  });
+});
+
+document.querySelectorAll('.range-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.range-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    rangeMode = item.dataset.range || 'all';
+    setDefaultExportModeByRange(rangeMode);
+    resetRangeDependentState();
+  });
+});
+
+document.querySelectorAll('.range-item input').forEach(input => {
+  input.addEventListener('focus', () => {
+    const parent = input.closest('.range-item');
+    if (parent) parent.click();
+  });
+  input.addEventListener('input', resetRangeDependentState);
+});
+
+function updateRangeStatus() {
+  const lang = i18n[currentLang];
+  if (!el.rangeStatus) return;
+  if (rangeList.length > 0) {
+    el.rangeStatus.textContent = (lang.range_added || '✅ {{count}}').replace('{{count}}', rangeList.length);
+    el.rangeStatus.className = 'range-status added';
+  } else {
+    el.rangeStatus.textContent = lang.range_unadded || '⚠️ 未添加范围';
+    el.rangeStatus.className = 'range-status unadded';
+  }
+}
+
+function getCurrentTotalCount() {
+  return validNumbers.length || 0;
+}
+
+function isRangeOverlap(newStart, newEnd) {
+  for (let i = 0; i < rangeList.length; i++) {
+    if (i === rangeEditIndex) continue;
+    const r = rangeList[i];
+    if (!(newEnd < r.start || newStart > r.end)) return true;
+  }
+  return false;
+}
+
+function openRangeModal() {
+  rangeEditIndex = -1;
+  const lang = i18n[currentLang];
+  rangeEl.formTitle.textContent = lang.range_add_title || lang.range_custom;
+  rangeEl.saveBtn.textContent = lang.add_btn;
+
+  let nextStart = 1;
+  if (rangeList.length > 0) {
+    const sorted = [...rangeList].sort((a, b) => a.end - b.end);
+    nextStart = sorted[sorted.length - 1].end + 1;
+  }
+
+  const maxEnd = getCurrentTotalCount();
+  if (nextStart > maxEnd) nextStart = '';
+  rangeEl.start.value = nextStart || '';
+  rangeEl.end.value = '';
+  rangeEl.end.placeholder = maxEnd > 0
+    ? (currentLang === 'zh' ? `最后：${maxEnd}` : `Last: ${maxEnd}`)
+    : '';
+
+  rangeEl.modal.classList.add('show');
+  renderRangeAddedList();
+}
+
+function closeRangeModal() { rangeEl.modal.classList.remove('show'); }
+rangeEl.closeX.addEventListener('click', closeRangeModal);
+rangeEl.finishBtn.addEventListener('click', closeRangeModal);
+
+rangeEl.quickAll.addEventListener('click', () => {
+  const total = getCurrentTotalCount();
+  rangeEl.start.value = total ? 1 : '';
+  rangeEl.end.value = total || '';
+});
+
+rangeEl.quickLast.addEventListener('click', () => {
+  const total = getCurrentTotalCount();
+  if (!total) return;
+  const n = 2000;
+  rangeEl.start.value = Math.max(1, total - n + 1);
+  rangeEl.end.value = total;
+});
+
+rangeEl.quickNext.addEventListener('click', () => {
+  const total = getCurrentTotalCount();
+  if (!total) return;
+  let nextStart = 1;
+  if (rangeList.length > 0) {
+    const sorted = [...rangeList].sort((a, b) => a.end - b.end);
+    nextStart = sorted[sorted.length - 1].end + 1;
+  }
+  rangeEl.start.value = nextStart <= total ? nextStart : '';
+  rangeEl.end.value = '';
+});
+
+rangeEl.saveBtn.addEventListener('click', () => {
+  const lang = i18n[currentLang];
+  const total = getCurrentTotalCount();
+  let s = parseInt(rangeEl.start.value, 10) || 0;
+  const rawEnd = String(rangeEl.end.value || '').trim();
+  let e = rawEnd ? (parseInt(rawEnd, 10) || 0) : total;
+
+  if (!total || s <= 0 || e <= 0 || s > e) {
+    alert(lang.range_invalid_error);
+    return;
+  }
+
+  if (s > total) {
+    alert(lang.range_empty_error);
+    return;
+  }
+
+  e = Math.min(e, total);
+
+  if (isRangeOverlap(s, e)) {
+    alert(lang.range_overlap_error || lang.overlap_error);
+    return;
+  }
+
+  const item = { start: s, end: e };
+  if (rangeEditIndex === -1) rangeList.push(item);
+  else rangeList[rangeEditIndex] = item;
+
+  rangeList.sort((a, b) => a.start - b.start);
+  rangeEditIndex = -1;
+  updateRangeStatus();
+  renderRangeAddedList();
+  resetRangeDependentState();
+
+  const last = rangeList[rangeList.length - 1];
+  const next = last ? last.end + 1 : 1;
+  rangeEl.start.value = next <= total ? next : '';
+  rangeEl.end.value = '';
+  rangeEl.formTitle.textContent = lang.range_add_title || lang.range_custom;
+  rangeEl.saveBtn.textContent = lang.add_btn;
+});
+
+function renderRangeAddedList() {
+  rangeEl.addedList.innerHTML = '';
+  const lang = i18n[currentLang];
+
+  rangeList.forEach((seg, i) => {
+    const count = Math.max(0, seg.end - seg.start + 1);
+    const txt = `${seg.start}~${seg.end} | ${count}${lang.range_unit || ''}`;
+    const div = document.createElement('div');
+    div.className = 'segment-item';
+    div.innerHTML = `
+      <span class="segment-text">${txt}</span>
+      <div>
+        <button class="btn btn-sm btn-range-edit" data-i="${i}">${lang.edit_btn}</button>
+        <button class="btn btn-sm btn-range-del" data-i="${i}">${lang.del_btn}</button>
+      </div>
+    `;
+    rangeEl.addedList.appendChild(div);
+  });
+
+  document.querySelectorAll('.btn-range-edit').forEach(b => {
+    b.onclick = () => {
+      const i = parseInt(b.dataset.i, 10);
+      const seg = rangeList[i];
+      if (!seg) return;
+      rangeEditIndex = i;
+      rangeEl.formTitle.textContent = i18n[currentLang].edit_btn;
+      rangeEl.saveBtn.textContent = i18n[currentLang].edit_btn;
+      rangeEl.start.value = seg.start;
+      rangeEl.end.value = seg.end;
+    };
+  });
+
+  document.querySelectorAll('.btn-range-del').forEach(b => {
+    b.onclick = () => {
+      const i = parseInt(b.dataset.i, 10);
+      rangeList.splice(i, 1);
+      rangeEditIndex = -1;
+      updateRangeStatus();
+      renderRangeAddedList();
+      resetRangeDependentState();
+    };
   });
 }
 
@@ -974,6 +2398,7 @@ document.querySelectorAll('.config-item').forEach(item => {
     document.querySelectorAll('.config-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
     currentMode = item.dataset.mode;
+    resetPreviewOnly();
     if (currentMode === 'advanced') openSegModal();
   };
 });
@@ -990,7 +2415,7 @@ function updateSegStatus() {
 }
 
 function isFullyCovered() {
-  const total = validNumbers.length;
+  const total = getCurrentRangeLength();
   if (total === 0) return false;
   const used = new Set();
   segmentList.forEach(s => { for (let i = s.start; i <= s.end; i++) used.add(i); });
@@ -1018,7 +2443,7 @@ function openSegModal() {
     const last = segmentList[segmentList.length - 1];
     nextStart = last.end + 1;
   }
-  const maxEnd = validNumbers.length || 0;
+  const maxEnd = getCurrentRangeLength() || 0;
   if (nextStart > maxEnd) nextStart = "";
 
   const maxText = currentLang === "zh" ? `最大: ${maxEnd}` : `Max: ${maxEnd}`;
@@ -1044,15 +2469,15 @@ segEl.type.addEventListener('change', () => {
   const lang = i18n[currentLang];
   const t = segEl.type.value;
   segEl.argLabel.textContent = t === 'split' ? lang.per_count : lang.per_count_count;
-  segEl.arg.value = t === 'split' ? 2000 : 5;
+  segEl.arg.value = t === 'split' ? 2000 : 1;
 });
 
 segEl.saveBtn.addEventListener('click', () => {
-  const maxEnd = validNumbers.length || 0;
+  const maxEnd = getCurrentRangeLength() || 0;
   let s = parseInt(segEl.start.value) || 0;
   let e = parseInt(segEl.end.value) || 0;
   const t = segEl.type.value;
-  let a = parseInt(segEl.arg.value);
+  let a = parseInt(segEl.arg.value, 10) || 0;
   const lang = i18n[currentLang];
 
   if (isFullyCovered()) { segEl.saveBtn.disabled = true; return; }
@@ -1141,8 +2566,140 @@ function getPositiveInt(value, fallback) {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-function getUncoveredCount() {
+function stripFileExtension(name) {
+  const clean = String(name || '').trim().replace(/\.[^.\/\\]+$/, '');
+  return clean || '号码';
+}
+
+function getSourceBaseName() {
+  return safeFileName(stripFileExtension(importedFileBaseName || '号码'));
+}
+
+function parsePositiveRangeNumber(inputEl, fallback = 0) {
+  const raw = String((inputEl && inputEl.value) || '').trim();
+  if (!raw) return fallback;
+  const normalized = raw.replace(/[，,\s]/g, '');
+  const n = parseInt(normalized, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function parseRangeEndNumber(inputEl, total) {
+  const raw = String((inputEl && inputEl.value) || '').trim();
+  if (!raw) return total;
+  if (/^(最后|末尾|last|end)$/i.test(raw)) return total;
+  const normalized = raw.replace(/[，,\s]/g, '');
+  const n = parseInt(normalized, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function getRangeLabel() {
+  const total = validNumbers.length || workingNumbers.length || 0;
+  const mode = getActiveRangeMode();
+
+  if (mode === 'first') {
+    const n = getPositiveInt(el.rangeFirstInput && el.rangeFirstInput.value, 0);
+    return n > 0 ? `前${Math.min(n, total || n)}条` : '前N条';
+  }
+
+  if (mode === 'last') {
+    const n = getPositiveInt(el.rangeLastInput && el.rangeLastInput.value, 0);
+    return n > 0 ? `后${Math.min(n, total || n)}条` : '后N条';
+  }
+
+  if (mode === 'custom') {
+    const s = parsePositiveRangeNumber(el.rangeCustomStartInput, 1) || 1;
+    const e = parseRangeEndNumber(el.rangeCustomEndInput, total) || (total || '最后');
+    return `${s}-${e}数据`;
+  }
+
+  return '全部数据';
+}
+
+function getZipFileName() {
+  return safeFileName(`${getSourceBaseName()}切割结果.zip`);
+}
+
+function getActiveGroupLabel(i) {
+  return `第${i + 1}组（${chunks[i] ? chunks[i].length : 0}个）`;
+}
+
+function getDirectChunkFileName(i) {
+  // 所有单个 TXT 和 ZIP 内部 TXT 统一使用：第几组（多少个）.txt
+  return getGroupFileName(i);
+}
+
+function getActiveRangeMode() {
+  const active = document.querySelector('.range-item.active');
+  return active ? (active.dataset.range || 'all') : rangeMode;
+}
+
+function getRangeNumbers(showAlert = false) {
+  const lang = i18n[currentLang];
   const total = validNumbers.length;
+  const mode = getActiveRangeMode();
+  rangeMode = mode;
+
+  if (!total) return [];
+
+  if (mode === 'all') {
+    return validNumbers.slice();
+  }
+
+  if (mode === 'first') {
+    const n = getPositiveInt(el.rangeFirstInput && el.rangeFirstInput.value, 0);
+    if (n <= 0) {
+      if (showAlert) alert(lang.range_invalid_error);
+      return null;
+    }
+    return validNumbers.slice(0, Math.min(n, total));
+  }
+
+  if (mode === 'last') {
+    const n = getPositiveInt(el.rangeLastInput && el.rangeLastInput.value, 0);
+    if (n <= 0) {
+      if (showAlert) alert(lang.range_invalid_error);
+      return null;
+    }
+    return validNumbers.slice(Math.max(0, total - n));
+  }
+
+  if (mode === 'custom') {
+    const s = parsePositiveRangeNumber(el.rangeCustomStartInput, 1);
+    let e = parseRangeEndNumber(el.rangeCustomEndInput, total);
+
+    // 自定义范围：起始默认第 1 条，结束留空/填“最后”默认到最后。
+    // 支持 12000、12,000、12 000 这类输入；结束超过总数时自动按最后一条处理。
+    if (s <= 0 || e <= 0 || s > e) {
+      if (showAlert) alert(lang.range_invalid_error);
+      return null;
+    }
+
+    if (s > total) {
+      if (showAlert) alert(lang.range_empty_error);
+      return null;
+    }
+
+    e = Math.min(e, total);
+    const result = validNumbers.slice(s - 1, e);
+
+    if (!result.length) {
+      if (showAlert) alert(lang.range_empty_error);
+      return null;
+    }
+
+    return result;
+  }
+
+  return validNumbers.slice();
+}
+
+function getCurrentRangeLength() {
+  const arr = getRangeNumbers(false);
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
+function getUncoveredCount() {
+  const total = workingNumbers.length;
   if (!total || segmentList.length === 0) return total;
 
   const covered = new Set();
@@ -1159,6 +2716,41 @@ el.processBtn.addEventListener('click', () => {
   if (!validNumbers.length) return;
   el.loading.classList.add('show');
   setTimeout(() => {
+    const selectedRange = getRangeNumbers(true);
+    if (!selectedRange || !selectedRange.length) {
+      el.loading.classList.remove('show');
+      return;
+    }
+    workingNumbers = selectedRange;
+
+    if (exportMode === 'direct') {
+      if (currentMode === 'advanced') {
+        if (segmentList.length === 0) {
+          alert(i18n[currentLang].unadded);
+          openSegModal();
+          el.loading.classList.remove('show');
+          return;
+        }
+        const missing = getUncoveredCount();
+        if (missing > 0) {
+          const ok = confirm("还有 " + missing + " 个有效号码未被任何分段覆盖，是否继续？");
+          if (!ok) {
+            el.loading.classList.remove('show');
+            return;
+          }
+        }
+        doAdvanced(false);
+      } else {
+        doNormal(false);
+      }
+
+      el.resultWrapper.style.display = 'none';
+      el.previewTable.innerHTML = '';
+      exportDirectResult();
+      el.loading.classList.remove('show');
+      return;
+    }
+
     if (currentMode === 'advanced') {
       if (segmentList.length === 0) {
         alert(i18n[currentLang].unadded);
@@ -1185,31 +2777,32 @@ el.processBtn.addEventListener('click', () => {
   }, 100);
 });
 
-function doNormal() {
+function doNormal(shouldRender = true) {
   chunks = [];
   selectedGroups.clear();
-  const vals = document.querySelectorAll('.config-input');
+  const source = workingNumbers.slice();
 
   if (currentMode === 'size') {
-    const size = getPositiveInt(vals[0].value, 2000);
-    for (let i = 0; i < validNumbers.length; i += size) {
-      chunks.push(validNumbers.slice(i, i + size));
+    const size = getPositiveInt(el.splitSizeInput && el.splitSizeInput.value, 2000);
+    for (let i = 0; i < source.length; i += size) {
+      chunks.push(source.slice(i, i + size));
     }
   } else {
-    const cnt = getPositiveInt(vals[1].value, 5);
-    const per = Math.max(1, Math.ceil(validNumbers.length / cnt));
-    for (let i = 0; i < validNumbers.length; i += per) {
-      chunks.push(validNumbers.slice(i, i + per));
+    const cnt = getPositiveInt(el.splitCountInput && el.splitCountInput.value, 1);
+    const per = Math.max(1, Math.ceil(source.length / cnt));
+    for (let i = 0; i < source.length; i += per) {
+      chunks.push(source.slice(i, i + per));
     }
   }
 
-  renderTable();
+  if (shouldRender) renderTable();
 }
 
-function doAdvanced() {
+function doAdvanced(shouldRender = true) {
   chunks = []; selectedGroups.clear();
+  const source = workingNumbers.slice();
   segmentList.forEach(seg => {
-    const slice = validNumbers.slice(seg.start - 1, seg.end);
+    const slice = source.slice(seg.start - 1, seg.end);
     if (!slice.length) return;
     if (seg.type === 'split') {
       const s = seg.arg;
@@ -1220,7 +2813,19 @@ function doAdvanced() {
       for (let i = 0; i < slice.length; i += p) chunks.push(slice.slice(i, i + p));
     }
   });
-  renderTable();
+  if (shouldRender) renderTable();
+}
+
+function exportDirectResult() {
+  if (!chunks.length) return;
+
+  if (chunks.length === 1) {
+    downloadBlob(makeTxtBlob(chunks[0]), getDirectChunkFileName(0));
+    return;
+  }
+
+  const indexes = chunks.map((_, i) => i);
+  exportIndexes(indexes, getZipFileName(), false, getDirectChunkFileName);
 }
 
 function getGroupTitle(i) {
@@ -1307,7 +2912,7 @@ function safeFileName(name) {
 }
 
 function getGroupFileName(i) {
-  return safeFileName(getGroupTitle(i) + '.txt');
+  return safeFileName(getActiveGroupLabel(i) + '.txt');
 }
 
 function downloadBlob(blob, fileName) {
@@ -1355,7 +2960,7 @@ function getDosDateTime(date = new Date()) {
   return { dosTime, dosDate };
 }
 
-function createZipFromIndexes(indexArray) {
+function createZipFromIndexes(indexArray, fileNameResolver = getGroupFileName) {
   if (!indexArray.length) throw new Error('No files selected');
   if (indexArray.length > 65535) throw new Error('Too many files for standard ZIP');
 
@@ -1368,7 +2973,7 @@ function createZipFromIndexes(indexArray) {
   indexArray.forEach(i => {
     if (!chunks[i]) return;
 
-    const fileName = getGroupFileName(i);
+    const fileName = fileNameResolver(i);
     const nameBytes = encoder.encode(fileName);
     const data = encoder.encode(chunks[i].join('\n'));
     const crc = crc32(data);
@@ -1437,17 +3042,17 @@ function createZipFromIndexes(indexArray) {
   return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
 }
 
-function exportIndexes(indexArray, zipName, singleTxtWhenOne = false) {
+function exportIndexes(indexArray, zipName, singleTxtWhenOne = false, fileNameResolver = getGroupFileName) {
   if (!indexArray.length) return;
 
   try {
     if (singleTxtWhenOne && indexArray.length === 1) {
       const i = indexArray[0];
-      downloadBlob(makeTxtBlob(chunks[i]), getGroupFileName(i));
+      downloadBlob(makeTxtBlob(chunks[i]), fileNameResolver(i));
       return;
     }
 
-    const zipBlob = createZipFromIndexes(indexArray);
+    const zipBlob = createZipFromIndexes(indexArray, fileNameResolver);
     downloadBlob(zipBlob, zipName);
   } catch (err) {
     alert(currentLang === "zh" ? ("导出失败：" + err.message) : ("Export failed: " + err.message));
@@ -1460,14 +3065,14 @@ el.exportSelectedTxt.onclick = () => {
     alert(i18n[currentLang].select_tip);
     return;
   }
-  const zipName = currentLang === "zh" ? "选中号码分组.zip" : "selected-number-groups.zip";
+  const zipName = getZipFileName();
   exportIndexes(arr, zipName, true);
 };
 
 el.exportAllTxt.onclick = () => {
   if (!chunks.length) return;
   const indexes = chunks.map((_, i) => i);
-  const zipName = currentLang === "zh" ? "号码分组.zip" : "number-groups.zip";
+  const zipName = getZipFileName();
   exportIndexes(indexes, zipName, false);
 };
 
@@ -1505,23 +3110,40 @@ async function shareMultipleTxt(indexArray) {
     }
   } else {
     alert(currentLang === "zh" ? "当前浏览器不支持文件分享，已改为下载" : "File sharing is not supported, downloading instead...");
-    const zipName = currentLang === "zh" ? "分享号码分组.zip" : "shared-number-groups.zip";
+    const zipName = getZipFileName();
     exportIndexes(indexArray, zipName, true);
   }
 }
 
 el.clearBtn.onclick = () => {
   el.numberInput.value = ''; updateStats();
-  segmentList = []; selectedGroups.clear();
+  if (el.rangeFirstInput) el.rangeFirstInput.value = 2000;
+  if (el.rangeLastInput) el.rangeLastInput.value = 2000;
+  if (el.rangeCustomStartInput) el.rangeCustomStartInput.value = '';
+  if (el.rangeCustomEndInput) el.rangeCustomEndInput.value = '';
+  segmentList = []; rangeList = []; selectedGroups.clear(); workingNumbers = [];
+  importedFileBaseName = "号码";
+  document.querySelectorAll('.range-item').forEach(i => i.classList.remove('active'));
+  const allRange = document.querySelector('.range-item[data-range="all"]');
+  if (allRange) allRange.classList.add('active');
+  rangeMode = 'all';
+  document.querySelectorAll('.config-item').forEach(i => i.classList.remove('active'));
+  const countMode = document.querySelector('.config-item[data-mode="count"]');
+  if (countMode) countMode.classList.add('active');
+  currentMode = 'count';
+  setExportMode('direct');
   updateSegStatus();
+  updateRangeStatus();
   el.resultWrapper.style.display = 'none';
   el.previewTable.innerHTML = '';
 };
 
 initFileDrop();
+setExportMode('direct');
 updateStats();
 updateI18n();
 updateSegStatus();
+updateRangeStatus();
 </script>
 </body>
 </html>
