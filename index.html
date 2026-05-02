@@ -476,6 +476,15 @@ body {
   accent-color: #007aff;
 }
 
+.btn-mobile-share-direct {
+  display: none;
+  background: #0a84ff;
+  color: #fff;
+}
+.btn-mobile-share-direct:active {
+  transform: scale(0.98);
+}
+
 .middle-card .seg-status {
   right: 16px;
   bottom: 5px;
@@ -857,6 +866,22 @@ button:disabled {
 }
 
 @media (max-width: 768px) {
+
+  .btn-mobile-share-direct {
+    display: block;
+    background: #0a84ff;
+    color: #fff;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    height: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+  }
+
   body {
     padding: 60px 12px 20px;
   }
@@ -912,6 +937,14 @@ button:disabled {
   .input-file-btn {
     height: 46px;
     font-size: 14px;
+  }
+
+  #numberInput,
+  .preview-table-container,
+  .list-content,
+  .added-list {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   /* 手机端预览表格横向滚动更友好 */
@@ -1095,18 +1128,19 @@ button:disabled {
     margin-bottom: 8px;
   }
   .export-options {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 8px;
   }
   .export-option {
+    width: 100%;
     min-width: 0;
     min-height: 42px;
     height: 42px;
-    padding: 0 10px;
+    padding: 0 12px;
     border-radius: 12px;
-    gap: 7px;
-    font-size: 12.5px;
+    gap: 8px;
+    font-size: 13px;
     line-height: 1;
     white-space: nowrap;
     overflow: hidden;
@@ -1271,7 +1305,7 @@ body {
 }
 
 body.export-direct {
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 body.export-preview {
@@ -1327,6 +1361,7 @@ body.export-preview {
   /* 直接导出模式：固定在首屏内，不出现页面级上下滚动 */
   body.export-direct {
     min-height: 100vh;
+    overflow-y: hidden;
   }
 
   body.export-direct .container {
@@ -1467,6 +1502,7 @@ body.export-preview {
         </div>
       </div>
 
+      <button class="btn btn-block btn-mobile-share-direct" type="button" id="mobileShareTxtBtn" data-i18n="mobile_direct_share_txt">直接分享 TXT</button>
       <button class="btn btn-block btn-main" id="processBtn" disabled data-i18n="process_btn">开始处理</button>
       <button class="btn btn-block btn-second" id="clearBtn" data-i18n="clear_btn">清空重置</button>
     </div>
@@ -1634,6 +1670,7 @@ const i18n = {
     share_selected_txt: "分享选中TXT",
     export_all_txt: "导出全部TXT",
     share_all_txt: "分享全部TXT",
+    mobile_direct_share_txt: "直接分享 TXT",
     add_segment: "添加分段",
     start_line: "起始行",
     end_line: "结束行",
@@ -1699,6 +1736,7 @@ const el = {
   shareSelectedTxt: document.getElementById('shareSelectedTxt'),
   exportAllTxt: document.getElementById('exportAllTxt'),
   shareAllTxt: document.getElementById('shareAllTxt'),
+  mobileShareTxtBtn: document.getElementById('mobileShareTxtBtn'),
   loading: document.getElementById('loading'),
   advancedItem: document.querySelector('.config-item[data-mode="advanced"]'),
   segStatus: document.querySelector('.seg-status')
@@ -1777,8 +1815,8 @@ function cleanPhone(s) {
 }
 
 function updateStats() {
-  const t = el.numberInput.value.trim();
-  if (!t) {
+  const t = el.numberInput.value;
+  if (!t || !t.trim()) {
     validNumbers = [];
     duplicateNumbers = [];
     invalidNumbers = [];
@@ -1791,20 +1829,33 @@ function updateStats() {
     return;
   }
 
-  const lines = t.split(/\n/).map(s => s.trim()).filter(Boolean);
-  const cleaned = lines.map(s => cleanPhone(s)).filter(x => x !== null);
-  const unique = [...new Set(cleaned)];
-  
-  const dupMap = {};
-  cleaned.forEach(n => {
-    dupMap[n] = (dupMap[n] || 0) + 1;
-  });
-  const dups = [];
-  for (const k in dupMap) {
-    if (dupMap[k] > 1) dups.push(k);
+  // 单次循环完成清洗、去重、重复统计、无效统计，避免导入大文件后重复扫描导致手机端卡顿。
+  const lines = t.split(/\r?\n/);
+  const seen = new Set();
+  const duplicateSet = new Set();
+  const unique = [];
+  const inv = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = raw.trim();
+    if (!line) continue;
+
+    const cleaned = cleanPhone(line);
+    if (!cleaned) {
+      inv.push(line);
+      continue;
+    }
+
+    if (seen.has(cleaned)) {
+      duplicateSet.add(cleaned);
+    } else {
+      seen.add(cleaned);
+      unique.push(cleaned);
+    }
   }
 
-  const inv = lines.filter(s => cleanPhone(s) === null);
+  const dups = Array.from(duplicateSet);
 
   validNumbers = unique;
   duplicateNumbers = dups;
@@ -1817,7 +1868,7 @@ function updateStats() {
 
   if (dups.length > 0) el.dupCard.setAttribute('clickable', 'true');
   else el.dupCard.removeAttribute('clickable');
-  
+
   if (inv.length > 0) el.invalidCard.setAttribute('clickable', 'true');
   else el.invalidCard.removeAttribute('clickable');
 }
@@ -1870,7 +1921,8 @@ function initFileDrop() {
   function applyImportedText(text) {
     el.numberInput.value = text || '';
     resetAfterImport();
-    updateStats();
+    // 让浏览器先完成导入文本的渲染，再统计，减少手机端导入后长时间假死的感觉。
+    requestAnimationFrame(() => updateStats());
   }
 
   function readFileAsText(file) {
@@ -2559,7 +2611,12 @@ function renderAddedList() {
   });
 }
 
-el.numberInput.addEventListener('input', updateStats);
+let updateStatsTimer = null;
+function scheduleUpdateStats() {
+  clearTimeout(updateStatsTimer);
+  updateStatsTimer = setTimeout(updateStats, 180);
+}
+el.numberInput.addEventListener('input', scheduleUpdateStats);
 
 function getPositiveInt(value, fallback) {
   const n = parseInt(value, 10);
@@ -3059,6 +3116,55 @@ function exportIndexes(indexArray, zipName, singleTxtWhenOne = false, fileNameRe
   }
 }
 
+
+async function prepareChunksForCurrentConfig(showAlert = true) {
+  if (!validNumbers.length) {
+    if (showAlert) alert('请先导入或输入有效号码');
+    return false;
+  }
+
+  const selectedRange = getRangeNumbers(showAlert);
+  if (!selectedRange || !selectedRange.length) return false;
+  workingNumbers = selectedRange;
+
+  if (currentMode === 'advanced') {
+    if (segmentList.length === 0) {
+      if (showAlert) {
+        alert(i18n[currentLang].unadded);
+        openSegModal();
+      }
+      return false;
+    }
+    const missing = getUncoveredCount();
+    if (missing > 0) {
+      const ok = confirm('还有 ' + missing + ' 个有效号码未被任何分段覆盖，是否继续？');
+      if (!ok) return false;
+    }
+    doAdvanced(false);
+  } else {
+    doNormal(false);
+  }
+
+  return chunks.length > 0;
+}
+
+async function shareCurrentTxtFiles() {
+  if (!el.mobileShareTxtBtn) return;
+  el.loading.classList.add('show');
+  try {
+    const ok = await prepareChunksForCurrentConfig(true);
+    if (!ok) return;
+    const indexes = chunks.map((_, i) => i);
+    await shareMultipleTxt(indexes);
+  } finally {
+    el.loading.classList.remove('show');
+  }
+}
+
+if (el.mobileShareTxtBtn) {
+  el.mobileShareTxtBtn.onclick = shareCurrentTxtFiles;
+}
+
 el.exportSelectedTxt.onclick = () => {
   const arr = getSelectedGroupIndexes();
   if (arr.length === 0) {
@@ -3109,9 +3215,7 @@ async function shareMultipleTxt(indexArray) {
       console.log('Share canceled or failed', err);
     }
   } else {
-    alert(currentLang === "zh" ? "当前浏览器不支持文件分享，已改为下载" : "File sharing is not supported, downloading instead...");
-    const zipName = getZipFileName();
-    exportIndexes(indexArray, zipName, true);
+    alert("当前浏览器不支持直接分享多个 TXT 文件，请更换手机浏览器，或使用导出功能下载文件。");
   }
 }
 
